@@ -1,0 +1,15 @@
+{
+  "name": "@inkcasthq/kvpg",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A key-value cache in PostgreSQL for Node.js, with a written contract",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "engines": { "node": ">=22.14.0" },
+  "repository": { "type": "git", "url": "git+https://github.com/inkcasthq/kvpg.git", "directory": "packages/kvpg" },
+  "keywords": ["postgresql", "cache", "key-value", "ttl"]
+}

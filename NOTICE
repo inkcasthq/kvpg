@@ -1,0 +1,9 @@
+kvpg
+Copyright 2026 The kvpg authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The design of the PostgreSQL table and its statements follows the article
+"Postgres as a key-value store" by Umesh Yadav (https://umesh.dev/blog/postgres-key-value-store/,
+2026-09-24). The list of operations follows pgkv by Umesh Yadav
+(https://github.com/imumesh18/pgkv, MIT License). kvpg contains no code from pgkv.

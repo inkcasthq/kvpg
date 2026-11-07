@@ -1,0 +1,20 @@
+{
+  "name": "kvpg-workspace",
+  "private": true,
+  "description": "Workspace of kvpg, a key-value cache in PostgreSQL for Node.js",
+  "license": "Apache-2.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "scripts": {
+    "build": "tsc --build packages/kvpg",
+    "check": "tsc --build packages/kvpg --force"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}
