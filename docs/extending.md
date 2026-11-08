@@ -37,7 +37,7 @@ The table gets its column type at creation, and the type does not change after t
 
 ## 3. Hooks
 
-A hook observes each operation for metrics and traces. It gets the operation, the count of keys, the count of hits and the time. It gets no keys and no values, so it cannot leak cached data. The OpenTelemetry plugin is issue #6.
+A hook observes a completed operation. Native OpenTelemetry is part of every store, as specified in `docs/telemetry.md` (issue #6). A hook receives safe counts, elapsed time, and an error code. It receives no keys, values, or error causes. The current error-bearing hook types need the safe replacements specified in T07 before release.
 
 ```ts
 const store = createStore({
@@ -48,7 +48,7 @@ const store = createStore({
 });
 ```
 
-A hook runs after the operation. It cannot change the result. If a hook throws, the store catches the error and gives it to `onHookError`.
+A hook observes the operation after it ends. It cannot change the result. If a hook throws, the store catches the error. The `onHookError` observer receives only the safe notice specified in T07.
 
 ## 4. Cleanup policy
 
