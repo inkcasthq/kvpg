@@ -95,6 +95,8 @@ The tracer, meter, and logger MUST use scope name `kvpg` and the emitting packag
 Adapters MUST delegate to the underlying store without adding another kvpg observation for the same operation [O6].
 A store implementation records its own public operation.
 
+All `kvpg.*` span names, metric names, event names, and attributes are custom kvpg names.
+`error.type` follows semantic conventions 1.45.0 [ERR].
 The operation vocabulary is fixed:
 
 | Public method | Span name | Kind |
@@ -182,7 +184,7 @@ The metric rules narrow this list further.
 | `kvpg.rows_deleted` | A nonnegative integer | Cleanup spans and logs |
 | `kvpg.batches` | A nonnegative integer | Cleanup spans and logs |
 | `kvpg.duration` | Nonnegative seconds | Logs |
-| `event.name` | A log event from T10 | Logs |
+| Log `eventName` | A custom kvpg event from T10 | Logs |
 | Hook `operation` | A method from T04 | Hook event |
 | Hook `keys`, `hits`, `durationMs` | Safe counts and elapsed milliseconds | Hook event |
 | Hook `errorCode` | A contract error code | Failed operation hook |
@@ -190,7 +192,7 @@ The metric rules narrow this list further.
 
 Contract error codes are `invalid_key`, `invalid_ttl`, `invalid_value`, `codec`, `driver`, and `closed`.
 The implementation identifier is a library constant, never a caller-supplied instance name.
-Scope version, timestamps, trace IDs, span IDs, flags, severity, fixed bodies, and fixed span names are structural fields.
+Scope version, timestamps, trace IDs, span IDs, flags, severity, fixed bodies, event names, and fixed span names are structural fields.
 The application owns resource attributes and baggage.
 kvpg does not copy either into its attributes.
 
@@ -289,12 +291,14 @@ The log rules are:
 
 | Event name | Severity | Fixed body | Trigger |
 |---|---|---|---|
-| `kvpg.operation.failed` | `ERROR`, 17 | `kvpg operation failed` | One failed public operation |
-| `kvpg.operation.slow` | `WARN`, 13 | `kvpg operation slow` | One successful operation at or over the threshold |
-| `kvpg.cleanup.recovered` | `INFO`, 9 | `kvpg cleanup recovered` | First successful interval cleanup after one or more failed interval invocations |
-| `kvpg.hook.failed` | `ERROR`, 17 | `kvpg hook failed` | One failed operation hook |
+| `kvpg.operation.failed` | 17 | `kvpg operation failed` | One failed public operation |
+| `kvpg.operation.slow` | 13 | `kvpg operation slow` | One successful operation at or over the threshold |
+| `kvpg.cleanup.recovered` | 9 | `kvpg cleanup recovered` | First successful interval cleanup after one or more failed interval invocations |
+| `kvpg.hook.failed` | 17 | `kvpg hook failed` | One failed operation hook |
 
-Every record includes `event.name`, the operation, store, trigger, outcome, and `kvpg.duration`.
+Every record MUST set its `eventName` field to the table value and omit the deprecated `event.name` attribute [EV].
+The severity number follows the table. kvpg does not specify `severityText` [EV].
+Every record includes the operation, store, trigger, outcome, and `kvpg.duration`.
 Failure records include the safe `error.type`.
 Hook failures use `hook` and outcome `error` without changing the operation outcome.
 
@@ -412,3 +416,6 @@ Local line references describe baseline `ba7f1c1`.
 [LOG]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.62.0/specification/logs/data-model.md "Log fields and trace identity, read 2026-11-08"
 [PROM]: https://prometheus.io/docs/guides/opentelemetry/ "Prometheus OTLP receiver, read 2026-11-08"
 [OTLP]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.62.0/specification/protocol/exporter.md#endpoint-urls-for-otlphttp "OTLP/HTTP endpoint rules, read 2026-11-08"
+
+[EV]: https://github.com/open-telemetry/semantic-conventions/blob/v1.45.0/docs/general/events.md "EventName, severity, and attributes, read 2026-11-09"
+[ERR]: https://github.com/open-telemetry/semantic-conventions/blob/v1.45.0/docs/registry/attributes/error.md "Stable error.type, read 2026-11-09"

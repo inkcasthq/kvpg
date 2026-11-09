@@ -25,9 +25,9 @@ const point = (extra = {}) => ({
   scope, attributes: { ...base }, value: 1, ...extra,
 });
 const log = (extra = {}) => ({
-  instrumentationScope: scope, severityNumber: 17, severityText: 'ERROR',
+  instrumentationScope: scope, eventName: 'kvpg.operation.failed', severityNumber: 17,
   body: 'kvpg operation failed', hrTime: [1, 0],
-  attributes: { ...base, 'event.name': 'kvpg.operation.failed', 'kvpg.outcome': 'error', 'kvpg.duration': 0.01, 'error.type': 'driver' },
+  attributes: { ...base, 'kvpg.outcome': 'error', 'kvpg.duration': 0.01, 'error.type': 'driver' },
   ...extra,
 });
 
@@ -147,7 +147,7 @@ for (const [name, extra] of [
   ['missing duration', { attributes: Object.fromEntries(Object.entries(log().attributes).filter(([key]) => key !== 'kvpg.duration')) }],
   ['missing timestamp', { hrTime: undefined }],
   ['invalid log identity', { spanContext: { traceId: '0'.repeat(32), spanId: '0'.repeat(16), traceFlags: 0 } }],
-  ['prototype event', { attributes: { ...log().attributes, 'event.name': '__proto__' }, severityNumber: undefined, severityText: undefined, body: undefined }],
+  ['prototype event', { eventName: '__proto__', severityNumber: undefined, severityText: undefined, body: undefined }],
 ]) {
   test(`T10 rejects ${name}`, () => {
     assert.throws(() => assertLogRecord(log(extra), { store: 'postgresql', version: '0.0.0' }));
@@ -162,4 +162,20 @@ test('T07 accepts safe operation and hook-error notices', () => {
 test('T07 rejects the current Error-bearing hook shape', () => {
   assert.throws(() => assertHookEvent({ operation: 'get', keys: 1, durationMs: 0.01, error: new Error('unsafe') }));
   assert.throws(() => assertHookEvent(new Error('unsafe'), { hookError: true }));
+});
+
+
+test('V3 EventName identifies a log event without the deprecated event.name attribute', () => {
+  const attributes = { ...log().attributes };
+  delete attributes['event.name'];
+  assertLogRecord(log({ eventName: 'kvpg.operation.failed', attributes }));
+});
+
+test('V3 an attribute-only event name cannot replace EventName', () => {
+  assert.throws(() => assertLogRecord(log({ eventName: undefined, attributes: { ...log().attributes, 'event.name': 'kvpg.operation.failed' } })), /event|field/);
+});
+
+
+test('V3 event records do not require SeverityText', () => {
+  assertLogRecord(log({ severityText: undefined }));
 });

@@ -419,7 +419,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       assertHookEvent(notices[0], { hookError: true });
       assertPrivateDataAbsent(notices, MARKERS);
       assert.equal(kvpgLogs(output).length, 1);
-      assert.equal(kvpgLogs(output)[0].attributes['event.name'], 'kvpg.hook.failed');
+      assert.equal(kvpgLogs(output)[0].eventName, 'kvpg.hook.failed');
       assertOperationSpan(kvpgSpans(output)[0], { ...expected, operation: 'get', outcome: 'success' });
       safe(output);
     });
@@ -531,7 +531,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
         assert.equal(await subject.store.get(KEY), VALUE);
         await assert.rejects(subject.store.get(''), { code: 'invalid_key' });
       });
-      assert.deepEqual(kvpgLogs(output).map((record) => record.attributes['event.name']), ['kvpg.operation.slow', 'kvpg.operation.failed']);
+      assert.deepEqual(kvpgLogs(output).map((record) => record.eventName), ['kvpg.operation.slow', 'kvpg.operation.failed']);
       safe(output);
     });
     check('T06/T10 interval cleanup is a root and emits one recovery per failure episode', async (t) => {
@@ -553,7 +553,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
         assert.equal(span.parentSpanContext, undefined);
         assert.equal(span.attributes['kvpg.trigger'], 'interval');
       }
-      assert.deepEqual(kvpgLogs(output).map((record) => record.attributes['event.name']),
+      assert.deepEqual(kvpgLogs(output).map((record) => record.eventName),
         ['kvpg.operation.failed', 'kvpg.operation.failed', 'kvpg.cleanup.recovered']);
       assert.equal(sum(output.metrics, 'kvpg.cleanup.rows_deleted'), 1);
       safe(output);

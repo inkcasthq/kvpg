@@ -10,7 +10,7 @@ const READS = new Set(['get', 'getMany', 'has', 'ttl']);
 const BASE = ['kvpg.operation', 'kvpg.store', 'kvpg.trigger'];
 const COUNTS = ['kvpg.keys', 'kvpg.hits', 'kvpg.misses', 'kvpg.rows_deleted', 'kvpg.batches'];
 const SPAN_FIELDS = [...BASE, ...COUNTS, 'kvpg.outcome', 'error.type'];
-const LOG_FIELDS = [...SPAN_FIELDS, 'event.name', 'kvpg.duration'];
+const LOG_FIELDS = [...SPAN_FIELDS, 'kvpg.duration'];
 const METRICS = Object.freeze({
   'kvpg.operation.duration': ['s', 'HISTOGRAM'],
   'kvpg.cache.hits': ['{key}', 'COUNTER'],
@@ -18,10 +18,10 @@ const METRICS = Object.freeze({
   'kvpg.cleanup.rows_deleted': ['{row}', 'COUNTER'],
 });
 const LOGS = Object.freeze({
-  'kvpg.operation.failed': [17, 'ERROR', 'kvpg operation failed', 'error'],
-  'kvpg.operation.slow': [13, 'WARN', 'kvpg operation slow', 'success'],
-  'kvpg.cleanup.recovered': [9, 'INFO', 'kvpg cleanup recovered', 'success'],
-  'kvpg.hook.failed': [17, 'ERROR', 'kvpg hook failed', 'error'],
+  'kvpg.operation.failed': [17, 'kvpg operation failed', 'error'],
+  'kvpg.operation.slow': [13, 'kvpg operation slow', 'success'],
+  'kvpg.cleanup.recovered': [9, 'kvpg cleanup recovered', 'success'],
+  'kvpg.hook.failed': [17, 'kvpg hook failed', 'error'],
 });
 
 function exactKeys(value, allowed, required = []) {
@@ -167,19 +167,17 @@ export function assertMetricPoints(points, expected = {}) {
 
 export function assertLogRecord(record, expected = {}) {
   scope(record.instrumentationScope, expected);
-  attributes(record.attributes, LOG_FIELDS, [...BASE, 'event.name', 'kvpg.outcome', 'kvpg.duration'], expected);
-  const event = record.attributes['event.name'];
+  attributes(record.attributes, LOG_FIELDS, [...BASE, 'kvpg.outcome', 'kvpg.duration'], expected);
+  const event = record.eventName;
   const definition = Object.hasOwn(LOGS, event) ? LOGS[event] : undefined;
   assert.ok(definition, 'unknown log event');
   assert.equal(record.severityNumber, definition[0], 'wrong log severity');
-  assert.equal(record.severityText, definition[1], 'wrong severity text');
-  assert.equal(record.body, definition[2], 'log body must be fixed');
-  assert.equal(record.attributes['kvpg.outcome'], definition[3], 'wrong log outcome');
-  if (record.eventName !== undefined) assert.equal(record.eventName, event, 'event name fields disagree');
+  assert.equal(record.body, definition[1], 'log body must be fixed');
+  assert.equal(record.attributes['kvpg.outcome'], definition[2], 'wrong log outcome');
   finite(record.attributes['kvpg.duration'], 'log duration');
   hrTime(record.hrTime);
   if (record.spanContext !== undefined) spanContext(record.spanContext);
-  if (definition[3] === 'error') {
+  if (definition[2] === 'error') {
     assert.ok(Object.hasOwn(record.attributes, 'error.type'), 'error log requires error.type');
     if (event === 'kvpg.hook.failed') assert.equal(record.attributes['error.type'], 'hook');
     else assert.ok(ERROR_CODES.includes(record.attributes['error.type']), 'operation failure needs a contract error code');
