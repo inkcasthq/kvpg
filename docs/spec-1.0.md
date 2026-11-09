@@ -327,7 +327,7 @@ It then resolves without stopping application telemetry providers.
 An accepted operation can still finish or fail through its normal path.
 A second `close` rejects with `closed`, as the current S11 rule states for subsequent calls.
 
-The pure `schemaSql()` helper remains available because it owns no live resource.
+After close, `schemaSql()` also rejects with `closed` under S11.
 `migrate()` obeys the same closed-state refusal as database operations.
 
 Acceptance starts work, calls close, and proves that no new work enters the driver.
