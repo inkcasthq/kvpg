@@ -61,9 +61,11 @@ Top-level and nested unsupported values fail rather than silently disappear.
 The proposed call is `createStore({ db, codec, hooks, cleanup, table, namespace, defaultTtlMs, telemetry })`.
 Only `db` is required.
 The store MUST accept `Queryable`, with `TransactionalQueryable` for nonempty `setMany`. [I2], [EXT]
+
 The facade exposes `KvStore` plus `schemaSql()` and `migrate()`.
 The current contract types define each portable operation result. [API]
 `schemaSql()` returns DDL text without a database call.
+
 `migrate()` applies that DDL through the driver.
 Construction does not silently migrate a database.
 
@@ -81,9 +83,11 @@ The logic of each asynchronous operation follows this sequence:
 If observers fail, the sequence MUST preserve the operation result. [S12], [HOOK], [TEL]
 Input refusal and empty batches still receive telemetry under T04.
 The database result shape is `{ rows, rowCount }`.
+
 The store MUST interpret a nullable `rowCount` through a documented query result rather than assume that null means success. [EXT], [I2]
 The driver MUST release an acquired transaction connection on every success and error path. [I2], [EXT]
 A rollback error does not replace the first caller error.
+
 The caller receives that first error as the `cause` of the safe contract error.
 Internal SQL is fixed apart from quoted identifiers and bounded statement structure.
 
@@ -107,9 +111,11 @@ CREATE TABLE IF NOT EXISTS public.kvpg_entries (
 The store MUST produce this structure with the selected schema, table, codec column, and table configuration. [I2], [DDL]
 The default schema is `public`, and the default table is `kvpg_entries`.
 `unlogged` defaults to false.
+
 The codec selects `bytea`, `text`, or `jsonb` at creation.
 An existing table does not change codec column types automatically.
 The default codec stores JSON data in `bytea`, subject to the #12 decision.
+
 The table has no index on `expires_at` until #7 changes D1 from measurement.
 
 Schema and table names MUST be quoted as PostgreSQL identifiers, including embedded quotes. [I2]
@@ -130,17 +136,21 @@ It measures logged and unlogged modes without promising durability for an unlogg
 A key is the string supplied by the caller.
 An internal key also identifies the namespace.
 The store MUST accept keys of 1 through 1,024 UTF-8 bytes without NUL and compare them byte by byte. [S3]
+
 It MUST reject other keys with `invalid_key`. [S3]
 The store does not normalize Unicode or change case.
 Recommendation for issue #2: reject malformed UTF-16 strings instead of allowing replacement characters to merge distinct caller strings.
+
 That refinement requires an explicit contract update and positive and negative tests before adoption.
 
 The store MUST isolate namespaces for reads, writes, prefix deletion, and cleanup. [NS]
 Simple raw concatenation is insufficient for overlapping namespace strings.
 Proposed internal framing is `byteLength(namespace) + ':' + namespace + key`.
+
 The length uses UTF-8 bytes and a canonical decimal representation.
 For example, namespaces `a` and `ab` then have different internal prefixes.
 The 1,024-byte key limit applies before this internal framing.
+
 Every query includes the namespace boundary, including cleanup queries.
 
 Acceptance covers empty keys, NUL, multibyte boundaries, a 1,024-byte key, and a 1,025-byte key.
@@ -166,9 +176,11 @@ An entry with less than one millisecond left can return zero while it remains li
 `ttlMs` MUST be a positive safe integer, and `expiresAt` MUST be a valid `Date`. [S4]
 Giving both MUST reject with `invalid_ttl`. [S4]
 Zero, negative, fractional, unsafe, and nonfinite `ttlMs` inputs MUST reject with `invalid_ttl`. [S4]
+
 A past absolute date makes the written entry expired immediately.
 With neither expiry field, the store uses its default lifetime or persistence.
 `expire` uses the same expiry validation and changes only a live entry.
+
 `persist` removes the expiry only from a live entry.
 These methods MUST return false for missing or expired entries. [S9]
 An expired entry does not become live through `expire` or `persist`.
@@ -182,9 +194,11 @@ No read refreshes expiry implicitly.
 Acceptance covers expiry equality, past dates, persistence, default expiry, and an explicit absolute deadline.
 It changes the application clock while the database clock stays fixed.
 It proves that expired rows remain invisible while they still exist physically.
+
 It covers `NaN`, infinity, unsafe integers, invalid dates, both expiry fields, and values just inside the accepted integer range.
 Database range errors preserve S12 and cannot produce a silent persistent entry.
 Total wall-clock sleeps in portable expiry tests MUST stay at or under two seconds. [I3]
+
 The PostgreSQL tests use controlled transactions, database timestamps, or expired fixtures instead of long sleeps.
 
 ## R07. Writes and deletion: S2, S5, S6
@@ -271,22 +285,27 @@ A semantic success without the required plan does not finish #2.
 `cleanupExpired` MUST delete expired entries in batches, with default `batchSize` 5,000 and no default `maxBatches` limit. [S10]
 It MUST stop at `maxBatches` or after a batch removes fewer rows than its size. [S10]
 The result is `{ deleted, batches }` for confirmed batches, including the final short batch.
+
 Two concurrent cleanups MUST skip locked candidates and never delete the same row twice. [S10], [CLEAN]
 Cleanup MUST never delete a live entry or cross its namespace boundary. [S10], [NS]
 The baseline query uses `FOR UPDATE SKIP LOCKED` inside the candidate selection and a second expiry predicate in the deletion.
+
 The implementation also applies the namespace predicate.
 
 A short batch can mean that another transaction holds candidate locks.
 It does not prove that no expired rows remain globally.
 A later invocation retries the remaining work.
+
 `batchSize` bounds deleted rows, not rows scanned or query duration.
 Issue #16 governs size limits and cancellation.
 Recommendation: accept only positive safe integers for explicit batch limits.
+
 The refusal code remains part of the #16 owner decision because S12 has no dedicated limit code.
 
 Manual cleanup is the default policy.
 An interval policy uses a timer that does not keep the process alive.
 The interval loop prevents its own overlapping invocations.
+
 The `pg_cron` policy supplies scheduling SQL for an application-managed extension.
 It does not claim JavaScript observations for database-only execution.
 All policies MUST preserve read behavior under S1. [POLICY], [S1]
@@ -303,9 +322,11 @@ The call rejects with `KvError`, and telemetry retains only confirmed progress u
 `close` MUST stop every timer owned by the store and leave caller-owned pools and clients open. [S11]
 After close begins, new portable operations MUST reject with `closed` before database work. [S11]
 Draft lifecycle policy: close first marks the store closed, stops new scheduled work, and waits for accepted work to settle.
+
 It then resolves without stopping application telemetry providers.
 An accepted operation can still finish or fail through its normal path.
 A second `close` rejects with `closed`, as the current S11 rule states for subsequent calls.
+
 The pure `schemaSql()` helper remains available because it owns no live resource.
 `migrate()` obeys the same closed-state refusal as database operations.
 
@@ -319,18 +340,22 @@ It covers a failed accepted operation, a second close, and a separate live store
 A codec converts application values to stored data and back.
 Its column type remains fixed for a table.
 An encode refusal MUST reject with `invalid_value`. [VALUES]
+
 A decode failure MUST reject with `codec`. [VALUES]
 A driver failure MUST reject with `driver`, and a closed operation MUST reject with `closed`. [S12]
 Each failure MUST expose one `KvError` with the corresponding code and the original driver or codec cause. [S12]
+
 The store MUST NOT convert an operational failure into a cache miss. [S12]
 Cause retention is caller behavior, never permission to publish the cause through telemetry.
 
 OPEN #12 determines missing-result representation and decoded `undefined` behavior.
 Under the recommendation, the default codec accepts JSON values: null, booleans, strings, finite numbers, arrays, and plain objects.
 Every nested value belongs to that same domain.
+
 Undefined, functions, symbols, BigInt, cycles, nonfinite numbers, sparse arrays, and unsupported object types fail encoding.
 A custom codec can support additional types through its declared domain.
 Under the recommended sentinel policy, no codec can return stored `undefined` as a live value.
+
 That decode result rejects with `codec`.
 
 Acceptance operates every permitted value type and its declared equality after a round trip.
@@ -350,9 +375,11 @@ Adapters do not duplicate observations for delegated operations.
 Each signal and hook MUST obey the single T07 allowlist. [I13], [TEL]
 No key, value, prefix, namespace, error cause, query text, or arbitrary error object enters observations.
 The implementation MUST replace the unsafe error-bearing hook fields before release. [I13], [HOOK], [TEL]
+
 The operation hook receives safe counts, elapsed milliseconds, and an optional safe error code.
 It cannot change a result.
 A failed hook triggers only the safe hook-error notice and the T10 record.
+
 Nested hook failures do not recurse.
 
 Acceptance uses in-memory exporters for traces, metrics, and logs with synthetic markers.
@@ -386,9 +413,11 @@ If the owner defers #17, the release scope and supported adapter claim need an e
 `@inkcasthq/kvpg-conformance` MUST export `conformance(name, factory)` on `node:test`, without another test framework. [I3]
 The factory creates an empty isolated store and supplies disposal for its resources.
 The suite MUST name at least one test for every S1 through S12 rule. [I3]
+
 It MUST include ordered reads, concurrent conditional writes, concurrent cleanups, and literal wildcard prefixes. [I3], [EDGES]
 It MUST include positive, negative, and recovery cases for the selected #11, #12, and #13 rules. [I10], [I11], [I12], [I13]
 The suite also exposes shared telemetry conformance with in-memory exporters.
+
 Optional future capabilities use separate suites rather than weaken the base contract.
 
 The behavior-suite implementation under #3 includes its own reference in-memory store.
@@ -408,9 +437,11 @@ Each implementation change MUST retain before-and-after test output for the beha
 Issue #7 MUST measure expiry-index choices at 100,000 and 10,000,000 rows, including HOT share and cleanup time per batch. [I7]
 HOT means an update that creates no new index entry.
 The benchmark MUST measure logged versus unlogged tables and `bytea` versus `jsonb` at one and eight clients. [I7]
+
 It MUST publish read latency, write latency, WAL per write, machine details, versions, commands, and raw output. [I7]
 WAL means the database record of changes for recovery.
 `docs/benchmarks.md` contains the results.
+
 `docs/design.md` links each measured decision to those results.
 The benchmark also measures batch sizes and encoded value sizes at the #16 limits.
 An affected default changes only after the measured result and owner decision.
@@ -431,9 +462,11 @@ It states each remaining limitation without a production cost claim that lacks m
 The current horizon after 1.0 includes loader coordination, stale serving, tags, compression, encryption, counters, compare-and-set, distributed locks, memory tiers, eviction, sharding, and expiry partitions.
 These features require explicit owner scope changes before implementation.
 A loader does not change the hard expiry of the store.
+
 A memory tier needs recovery after missed invalidation.
 A distributed lock needs ownership, expiry, connection, and stale-writer rules.
 An expiry partition needs a solution for uniqueness and atomic batches.
+
 The release MUST NOT advertise an unqualified deferred capability. [I10], [FUTURE]
 
 ## Sources

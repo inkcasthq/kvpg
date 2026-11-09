@@ -12,7 +12,8 @@
   },
   "scripts": {
     "build": "tsc --build packages/kvpg",
-    "check": "tsc --build packages/kvpg --force"
+    "check": "tsc --build packages/kvpg --force",
+    "test": "node --test test/telemetry/*.test.mjs"
   },
   "devDependencies": {
     "typescript": "7.0.2"

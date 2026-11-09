@@ -10,6 +10,7 @@ An exporter sends recorded signals to a destination.
 `MUST` states a requirement. `SHOULD` states a recommendation with a documented reason for each deviation.
 These keywords use the meanings of RFC 2119.
 Each numbered rule cites its authority.
+
 Detailed policies under issue #6 are choices of this draft, unless the text marks an open owner choice.
 The tests for this contract belong to issue #3.
 This draft does not claim that the store or its telemetry exists.
@@ -19,9 +20,11 @@ This draft does not claim that the store or its telemetry exists.
 Every store and adapter MUST implement this contract as native behavior [O6].
 The main package MUST depend on `@opentelemetry/api` only for OpenTelemetry interfaces [O6].
 Its runtime dependencies MUST exclude SDKs, exporters, samplers, instrumentation packages, and a separate logs API package [O6].
+
 The application owns providers, resources, processors, exporters, sampling, propagation, and shutdown.
 kvpg MUST NOT install global providers, change application propagation, start an exporter, or open a metrics server [O6].
 kvpg MUST NOT detect installed SDK packages to choose whether telemetry is enabled [M].
+
 The conformance development environment can use SDKs and in-memory exporters.
 
 ## T02. Versions remain an owner choice
@@ -29,9 +32,11 @@ The conformance development environment can use SDKs and in-memory exporters.
 OPEN OWNER CHOICE #14: the supported API and SDK ranges are undecided [O14].
 Option A qualifies API `>=1.10.0 <1.11.0` with stable SDK packages `>=3.0.0 <4.0.0`.
 Option B qualifies API 1.9 and SDK 2 with a separate application logger bridge.
+
 Option B needs a revised logs design because the main package cannot depend on a separate logs API.
 Recommendation: select Option A, then qualify exact minimum and current pairs before widening either range.
 API 1.10 includes the logs interface [JS3].
+
 No API/SDK pair is qualified by this document.
 
 Each release MUST name its tested ranges and exact test pairs [O14].
@@ -64,9 +69,11 @@ No warning includes its raw value.
 The resolved master switch uses the first defined value: instance `enabled`, the environment switch, then the selected release default.
 A boolean `telemetry` supplies instance `enabled`.
 An omitted signal switch means true.
+
 If either switch is false, the signal is disabled.
 Thus `enabled: false` disables all three signals, even with `traces: true`.
 The implementation MUST obey this precedence independently for each store [O6].
+
 With a signal disabled, kvpg MUST make no recording calls for that signal [O6].
 With all signals disabled, kvpg MUST skip telemetry clocks, attribute construction, and API calls for the operation [O6].
 Application hooks remain independent of these switches.
@@ -74,9 +81,11 @@ Application hooks remain independent of these switches.
 OPEN OWNER CHOICE #6: the release default is undecided.
 Option A enables all three signals by default. A compatible application pipeline receives native telemetry without store configuration.
 Option B disables all three signals by default. The application enables telemetry through the environment or the store configuration.
+
 Recommendation: select Option A to match the native telemetry goal.
 Option B matches the default recommended by the MongoDB tracing specification [M].
 Neither option proves a cost claim.
+
 The suite accepts an explicit default declaration until the owner selects the release default.
 
 ## T04. Scope and operation names
@@ -125,9 +134,11 @@ kvpg MUST NOT put trace headers, trace comments, baggage, or cached data into SQ
 Database CLIENT spans and `db.client.operation.duration` belong to the driver instrumentation.
 kvpg MUST NOT emit either database observation under this ownership policy [O6].
 The driver instrumentation creates its CLIENT children under the active kvpg operation.
+
 An uninstrumented driver produces no database CLIENT spans.
 Each store integration MUST document the driver instrumentation that owns its database observations [O6].
 Driver instrumentation is application configuration and is outside the main package dependency tree.
+
 The application MUST disable query parameters, query text, and exception capture that can expose cached data in the selected driver instrumentation [O13].
 This restriction applies to the qualified integration, even though kvpg cannot control an unrelated application instrumentation.
 
@@ -141,12 +152,15 @@ The store MUST count one public operation, rather than one operation per databas
 A manual `cleanupExpired` call uses its caller context.
 An interval cleanup uses `ROOT_CONTEXT`, so a request that created the store does not become its parent.
 Each interval invocation MUST create one `kvpg.cleanupExpired` INTERNAL span with trigger `interval` [O6].
+
 Each manual invocation MUST use trigger `foreground` [O6].
 Database batches remain children of that invocation through driver instrumentation.
 The store MUST prevent overlapping interval invocations from the same store [O6].
+
 Separate stores can clean concurrently under S10.
 Database-scheduled `pg_cron` work does not execute JavaScript.
 kvpg MUST NOT invent spans, durations, or removed-row counts for database-scheduled work that it cannot observe [O6].
+
 `close` MUST stop telemetry-related timers that the store owns without stopping application providers [O6], [S11].
 
 ## T07. Privacy and the single allowlist
@@ -183,9 +197,11 @@ kvpg does not copy either into its attributes.
 Every kvpg signal and hook argument MUST contain only these permitted fields and structural fields [O13].
 Signals, span events, link attributes, hook arguments, and diagnostics MUST NOT contain keys, prefixes, namespaces, values, or error causes [O13].
 The ban includes encoded, hashed, truncated, and stringified forms.
+
 kvpg MUST exclude SQL, parameters, connection strings, addresses, table names, arbitrary error messages, stacks, and exception events [O13].
 kvpg MUST NOT call `recordException` or forward an `Error` object to an observer [O13].
 kvpg MUST keep the original S12 `KvError.cause` for the caller [S12], [O13].
+
 Caller error fidelity does not permit telemetry disclosure.
 
 The current `OperationEvent.error` and `onHookError(error)` types need safe replacements before implementation.
@@ -206,12 +222,15 @@ The store still performs the cache operation and handles enabled metrics and log
 If the context is valid, the store MUST activate it even if `span.isRecording()` is false [O6], [M].
 If the span does not record, the store MUST skip completion attributes, status, and span events [O6], [M].
 It still ends a valid span exactly once.
+
 If the span records, the store MUST add safe completion attributes and end it exactly once [O6].
 Success keeps status `UNSET`.
 A failure sets status `ERROR` and `error.type`, without a status description or an exception event.
+
 T09 defines read counts and cleanup counts.
 Other spans omit unavailable counts.
 `kvpg.keys` counts supplied key occurrences, including duplicates.
+
 Prefix, cleanup, migration, schema, and close operations omit `kvpg.keys`.
 
 Metric and log recording MUST NOT depend on trace sampling, span validity, or `isRecording()` [O6].
@@ -235,21 +254,26 @@ The store MUST use the following instruments and units with metrics enabled [O6]
 Every duration point has exactly `kvpg.operation`, `kvpg.store`, `kvpg.trigger`, and `kvpg.outcome`.
 An error duration point also has `error.type`.
 Each counter point has exactly `kvpg.operation`, `kvpg.store`, and `kvpg.trigger`.
+
 The store MUST omit all other metric attributes, including numeric counts, IDs, and names supplied by callers [O13], [O6].
 It MUST record durations in seconds and counter increments as nonnegative integers [O6].
 Zero counter increments produce no point.
+
 Every successful read occurrence counts once, including a repeated key in `getMany`.
 An expired entry counts as a miss under S1.
 A persistent `ttl` result counts as a hit.
+
 Failed reads contribute no hit or miss increments.
 Writes, deletes, `expire`, and `persist` contribute neither hits nor misses.
 
 Cleanup increments the removed-row counter after each confirmed batch.
 A later failed batch does not erase the confirmed increments.
 Its operation duration records an error.
+
 The store MUST NOT infer deleted rows from requested batch size or from a failed query [O6].
 Metrics MUST remain available with traces disabled or sampled out [O6].
 The generic driver interface exposes no portable pool measurements.
+
 kvpg publishes no pool metrics in 1.0.
 
 The database instrumenter can emit `db.client.operation.duration` as a Histogram in `s` [DBM].
@@ -273,21 +297,26 @@ The log rules are:
 Every record includes `event.name`, the operation, store, trigger, outcome, and `kvpg.duration`.
 Failure records include the safe `error.type`.
 Hook failures use `hook` and outcome `error` without changing the operation outcome.
+
 Cleanup records include confirmed row and batch counts.
 The store MUST emit records according to this table and the T07 allowlist [O6], [O13].
 If multiple internal actions fail, the operation emits one failure record.
+
 A failed operation does not also emit a slow record.
 `slowOperationMs` is a finite positive number in milliseconds.
 An omitted threshold disables slow records.
+
 The threshold `SHOULD` come from application latency requirements rather than an invented universal default [O6].
 No successful foreground operation emits an ordinary success record.
 
 Recovery state belongs to each interval cleanup loop.
 An initial success produces no recovery record.
 After repeated failures, one success produces one recovery record and resets that state.
+
 The store MUST reset this state without mixing separate store instances [O6].
 Logs use the valid active operation context, even for a nonrecording span.
 With traces disabled, logs retain the valid caller context.
+
 With no valid context, trace identity fields are absent.
 The store MUST NOT synthesize trace IDs for logs [LOG].
 
@@ -324,9 +353,11 @@ Each setup starts in a fresh process without an active parent span.
 The two SDK setups use the same metric and log providers.
 Their trace setup records without a trace processor or exporter, to separate recording cost from delivery cost.
 An additional end-to-end export measurement can report delivery cost separately.
+
 The benchmark MUST report latency, throughput, allocations or heap delta, CPU time, sample counts, and overhead relative to `off` [O6].
 It MUST include warm-up, interleaved setup order, repetitions, versions, source SHA, commands, and raw output [O6], [M].
 It MUST cover hits, misses, writes, batches, input refusals, driver errors, and cleanup [O6].
+
 Report trace-only measurements as a separate series to isolate the span gates.
 The benchmark `SHOULD` compare the selected default against the commit before telemetry support [M].
 No numeric budget is selected here. No no-op or enabled cost is measured here.
