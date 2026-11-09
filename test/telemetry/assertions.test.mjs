@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import {
   assertPrivateDataAbsent,
   assertOperationSpan,
@@ -237,3 +238,20 @@ test('V6 a valid later stream cannot hide an earlier wrong-unit instrument', () 
   }] }] });
   assert.throws(() => assertMetricPoints(flattenMetrics([exported('ms'), exported('{key}')])), /unit/);
 });
+
+
+
+for (const [encoding, hex] of [
+  ['hexadecimal', Buffer.from(MARKER).toString('hex')],
+  ['SHA-256', createHash('sha256').update(MARKER).digest('hex')],
+]) {
+  for (const [casing, encoded] of [
+    ['uppercase', hex.toUpperCase()],
+    ['mixed case', hex.replace(/[a-f]/g, (char, index) => index % 3 ? char.toUpperCase() : char)],
+  ]) {
+    test(`V7 rejects a synthetic marker encoded as ${casing} ${encoding} in resource fields`, () => {
+      const record = { resource: { attributes: { 'service.instance.id': encoded } } };
+      assert.throws(() => assertPrivateDataAbsent(record, [MARKER]), /private data/);
+    });
+  }
+}

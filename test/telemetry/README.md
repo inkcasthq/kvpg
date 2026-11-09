@@ -48,6 +48,7 @@ With a real store factory supplied, a missing SDK package fails setup instead of
 The privacy inspector examines data properties, including non-enumerable causes, without calling getters.
 It also examines map entries, set entries, bytes, and property names.
 It detects raw markers, URI encoding, JSON escaping, base64, hexadecimal, and SHA-256 hexadecimal forms.
+Hexadecimal detection accepts lowercase, uppercase, and mixed case.
 The field allowlists reject arbitrary attributes even without a marker.
 No finite marker set proves every possible transformation.
 

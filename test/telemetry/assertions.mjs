@@ -89,9 +89,13 @@ export function assertPrivateDataAbsent(observations, markers) {
       Buffer.from(marker).toString('base64'), Buffer.from(marker).toString('hex'),
       createHash('sha256').update(marker).digest('hex')];
   });
+  const hexNeedles = markers.flatMap((marker) => [Buffer.from(marker).toString('hex'),
+    createHash('sha256').update(marker).digest('hex')]);
   const seen = new WeakSet();
   const examineString = (value) => {
     for (const needle of needles) assert.ok(!value.includes(needle), 'private data found in an observation');
+    const folded = value.toLowerCase();
+    for (const needle of hexNeedles) assert.ok(!folded.includes(needle), 'private data found in an observation');
   };
   function visit(value) {
     if (typeof value === 'string') return examineString(value);
