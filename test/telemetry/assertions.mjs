@@ -253,3 +253,16 @@ export function metricDelta(before, after) {
   }
   return result;
 }
+
+
+export function assertConformanceSignals(snapshot, expected, markers, hooks = []) {
+  const publicFields = snapshot.spans.map((span) => ({ context: span.spanContext(), resource: span.resource?.attributes,
+    scope: span.instrumentationScope, attributes: span.attributes, events: span.events, links: span.links, status: span.status }));
+  assertPrivateDataAbsent({ spans: snapshot.spans, publicFields, logs: snapshot.logs, metrics: snapshot.rawMetrics, hooks }, markers);
+  assertMetricPoints(snapshot.metrics, expected);
+  for (const span of snapshot.spans.filter((span) => span.instrumentationScope.name === 'kvpg')) {
+    assertOperationSpan(span, { ...expected, operation: span.attributes['kvpg.operation'], outcome: span.attributes['kvpg.outcome'] });
+  }
+  for (const record of snapshot.logs.filter((record) => record.instrumentationScope.name === 'kvpg')) assertLogRecord(record, expected);
+  for (const event of hooks) assertHookEvent(event);
+}

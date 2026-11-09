@@ -50,6 +50,7 @@ It also examines map entries, set entries, bytes, and property names.
 It detects raw markers, URI encoding, JSON escaping, base64, hexadecimal, and SHA-256 hexadecimal forms.
 Hexadecimal detection accepts lowercase, uppercase, and mixed case.
 The field allowlists reject arbitrary attributes even without a marker.
+Every shared inspection applies the span schema to all kvpg spans, including failure and interval paths.
 No finite marker set proves every possible transformation.
 
 Metric exports contain cumulative snapshots.

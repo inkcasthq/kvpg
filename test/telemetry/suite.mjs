@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, describe, test } from 'node:test';
 import {
-  OPERATIONS, assertPrivateDataAbsent, assertOperationSpan, assertMetricPoints,
-  assertLogRecord, assertHookEvent,
+  OPERATIONS, assertPrivateDataAbsent, assertOperationSpan,
+  assertHookEvent, assertConformanceSignals,
 } from './assertions.mjs';
 import { createSession } from './sdk-harness.mjs';
 import { readFile } from 'node:fs/promises';
@@ -120,12 +120,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       return session.since(start, await session.snapshot());
     }
     function safe(snapshot, hooks = []) {
-      const publicFields = snapshot.spans.map((span) => ({ context: span.spanContext(), resource: span.resource?.attributes,
-        scope: span.instrumentationScope, attributes: span.attributes, events: span.events, links: span.links, status: span.status }));
-      assertPrivateDataAbsent({ spans: snapshot.spans, publicFields, logs: snapshot.logs, metrics: snapshot.rawMetrics, hooks }, MARKERS);
-      assertMetricPoints(snapshot.metrics, expected);
-      for (const record of kvpgLogs(snapshot)) assertLogRecord(record, expected);
-      for (const event of hooks) assertHookEvent(event);
+      assertConformanceSignals(snapshot, expected, MARKERS, hooks);
     }
 
     // These three cases precede the single global provider registration.

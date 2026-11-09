@@ -3,6 +3,7 @@ import test from 'node:test';
 import { createHash } from 'node:crypto';
 import {
   assertPrivateDataAbsent,
+  assertConformanceSignals,
   assertOperationSpan,
   assertMetricPoints,
   assertLogRecord,
@@ -255,3 +256,19 @@ for (const [encoding, hex] of [
     });
   }
 }
+
+
+for (const [name, change] of [
+  ['an arbitrary span attribute without a known marker', { attributes: { ...span().attributes, 'exception.message': 'unexpected failure' } }],
+  ['a status that contradicts the outcome', { status: { code: 2 } }],
+]) {
+  test(`V7 shared conformance inspection rejects ${name}`, () => {
+    const snapshot = { spans: [span(change)], logs: [], metrics: [], rawMetrics: [] };
+    assert.throws(() => assertConformanceSignals(snapshot, { store: 'postgresql', version: '0.0.0' }, [MARKER]));
+  });
+}
+
+test('V7 shared conformance inspection accepts safe records from all three signals', () => {
+  assertConformanceSignals({ spans: [span()], logs: [log()], metrics: [point()], rawMetrics: [] },
+    { store: 'postgresql', version: '0.0.0' }, [MARKER], [{ operation: 'get', keys: 1, hits: 1, durationMs: 0.01 }]);
+});
