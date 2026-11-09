@@ -209,8 +209,10 @@ export function assertHookEvent(event, { hookError = false } = {}) {
 }
 
 function pointKey(point) {
-  return JSON.stringify([point.scope.name, point.scope.version, point.name,
-    Object.entries(point.attributes).sort(([a], [b]) => a.localeCompare(b))]);
+  const entries = (value) => Object.entries(value ?? {}).sort(([a], [b]) => a.localeCompare(b));
+  return JSON.stringify([point.scope.name, point.scope.version, point.scope.schemaUrl,
+    entries(point.scope.attributes), entries(point.resourceAttributes),
+    point.name, point.unit, point.instrumentType, entries(point.attributes)]);
 }
 
 export function flattenMetrics(exports) {
@@ -222,7 +224,8 @@ export function flattenMetrics(exports) {
       : metric.dataPointType === 3 && metric.isMonotonic === true ? 'COUNTER' : 'GAUGE';
     for (const data of metric.dataPoints) {
       const point = { name: metric.descriptor.name, unit: metric.descriptor.unit,
-        instrumentType, scope: group.scope, attributes: data.attributes, value: structuredClone(data.value) };
+        instrumentType, scope: group.scope, resourceAttributes: structuredClone(resource.resource?.attributes ?? {}),
+        attributes: data.attributes, value: structuredClone(data.value) };
       latest.set(pointKey(point), point);
     }
   }

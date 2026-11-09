@@ -211,3 +211,29 @@ test('V6 successful cleanup observations retain confirmed row and batch counts',
   assertLogRecord(log({ eventName: 'kvpg.cleanup.recovered', severityNumber: 9, body: 'kvpg cleanup recovered',
     attributes: { ...attributes, 'kvpg.duration': 0.01 } }));
 });
+
+for (const difference of ['unit', 'instrument', 'scope schema', 'scope attributes', 'resource attributes']) {
+  test(`V6 metric normalization retains streams with different ${difference}`, () => {
+    const metric = (extra = {}) => ({ descriptor: { name: 'kvpg.cache.hits', unit: '{key}' },
+      dataPointType: 3, isMonotonic: true, dataPoints: [{ attributes: base, value: 1 }], ...extra });
+    const first = { resource: { attributes: { 'service.name': 'test-a' } },
+      scopeMetrics: [{ scope, metrics: [metric()] }] };
+    const second = structuredClone(first);
+    if (difference === 'unit') second.scopeMetrics[0].metrics[0].descriptor.unit = '1';
+    if (difference === 'instrument') second.scopeMetrics[0].metrics[0].isMonotonic = false;
+    if (difference === 'scope schema') second.scopeMetrics[0].scope.schemaUrl = 'https://opentelemetry.io/schemas/1.45.0';
+    if (difference === 'scope attributes') second.scopeMetrics[0].scope.attributes = { test: 'second' };
+    if (difference === 'resource attributes') second.resource.attributes['service.name'] = 'test-b';
+    const actual = flattenMetrics([first, second]);
+    assert.equal(actual.length, 2, 'normalization must not erase a distinct metric stream');
+    assert.equal(metricDelta([], actual).length, 2);
+  });
+}
+
+test('V6 a valid later stream cannot hide an earlier wrong-unit instrument', () => {
+  const exported = (unit) => ({ scopeMetrics: [{ scope, metrics: [{
+    descriptor: { name: 'kvpg.cache.hits', unit }, dataPointType: 3, isMonotonic: true,
+    dataPoints: [{ attributes: base, value: 1 }],
+  }] }] });
+  assert.throws(() => assertMetricPoints(flattenMetrics([exported('ms'), exported('{key}')])), /unit/);
+});

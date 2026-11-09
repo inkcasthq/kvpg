@@ -52,7 +52,8 @@ The field allowlists reject arbitrary attributes even without a marker.
 No finite marker set proves every possible transformation.
 
 Metric exports contain cumulative snapshots.
-The test backend uses the latest point for each scope, metric, and attribute set.
+The test backend uses the latest point for each complete metric stream.
+A stream includes resource attributes, scope metadata, metric name, unit, aggregation kind, and point attributes.
 It subtracts earlier counts and sums to isolate each case.
 It does not add cumulative snapshots together.
 The API probe distinguishes counters from observable instruments because exported sums alone do not distinguish them.
