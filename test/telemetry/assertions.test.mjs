@@ -179,3 +179,35 @@ test('V3 an attribute-only event name cannot replace EventName', () => {
 test('V3 event records do not require SeverityText', () => {
   assertLogRecord(log({ severityText: undefined }));
 });
+
+for (const name of ['kvpg.hits', 'kvpg.misses']) {
+  test(`V6 logs reject the span-only field ${name}`, () => {
+    assert.throws(() => assertLogRecord(log({ attributes: { ...log().attributes, [name]: 1 } })), /field|count/);
+  });
+}
+for (const name of ['kvpg.rows_deleted', 'kvpg.batches']) {
+  test(`V6 a read span rejects the cleanup-only field ${name}`, () => {
+    assert.throws(() => assertOperationSpan(span({ attributes: { ...span().attributes, [name]: 1 } }),
+      { operation: 'get', outcome: 'success' }), /cleanup|count|field/);
+  });
+  test(`V6 a read log rejects the cleanup-only field ${name}`, () => {
+    assert.throws(() => assertLogRecord(log({ attributes: { ...log().attributes, [name]: 1 } })), /cleanup|count|field/);
+  });
+}
+for (const operation of ['deletePrefix', 'cleanupExpired', 'close', 'schemaSql', 'migrate']) {
+  test(`V6 ${operation} spans omit key-occurrence counts`, () => {
+    assert.throws(() => assertOperationSpan(span({ name: `kvpg.${operation}`,
+      attributes: { ...base, 'kvpg.operation': operation, 'kvpg.outcome': 'success', 'kvpg.keys': 1 } }),
+    { operation, outcome: 'success' }), /key|count|field/);
+  });
+}
+
+
+test('V6 successful cleanup observations retain confirmed row and batch counts', () => {
+  const attributes = { ...base, 'kvpg.operation': 'cleanupExpired', 'kvpg.trigger': 'interval',
+    'kvpg.outcome': 'success', 'kvpg.rows_deleted': 3, 'kvpg.batches': 2 };
+  assertOperationSpan(span({ name: 'kvpg.cleanupExpired', attributes }),
+    { operation: 'cleanupExpired', outcome: 'success' });
+  assertLogRecord(log({ eventName: 'kvpg.cleanup.recovered', severityNumber: 9, body: 'kvpg cleanup recovered',
+    attributes: { ...attributes, 'kvpg.duration': 0.01 } }));
+});

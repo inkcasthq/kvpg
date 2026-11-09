@@ -10,7 +10,7 @@ const READS = new Set(['get', 'getMany', 'has', 'ttl']);
 const BASE = ['kvpg.operation', 'kvpg.store', 'kvpg.trigger'];
 const COUNTS = ['kvpg.keys', 'kvpg.hits', 'kvpg.misses', 'kvpg.rows_deleted', 'kvpg.batches'];
 const SPAN_FIELDS = [...BASE, ...COUNTS, 'kvpg.outcome', 'error.type'];
-const LOG_FIELDS = [...SPAN_FIELDS, 'kvpg.duration'];
+const LOG_FIELDS = [...BASE, 'kvpg.keys', 'kvpg.rows_deleted', 'kvpg.batches', 'kvpg.outcome', 'error.type', 'kvpg.duration'];
 const METRICS = Object.freeze({
   'kvpg.operation.duration': ['s', 'HISTOGRAM'],
   'kvpg.cache.hits': ['{key}', 'COUNTER'],
@@ -61,6 +61,9 @@ function attributes(actual, allowed, required, expected) {
   if (Object.hasOwn(actual, 'kvpg.outcome')) assert.ok(['success', 'error'].includes(actual['kvpg.outcome']), 'unknown outcome');
   if (Object.hasOwn(actual, 'error.type')) assert.ok([...ERROR_CODES, 'hook'].includes(actual['error.type']), 'unknown error code');
   for (const key of COUNTS) if (Object.hasOwn(actual, key)) count(actual[key], key);
+  for (const key of ['kvpg.rows_deleted', 'kvpg.batches']) {
+    if (Object.hasOwn(actual, key)) assert.equal(actual['kvpg.operation'], 'cleanupExpired', 'cleanup counts require cleanupExpired');
+  }
 }
 
 function hrTime(value) {
@@ -132,6 +135,9 @@ export function assertOperationSpan(span, expected) {
   }
   if (Object.hasOwn(span.attributes, 'kvpg.hits') || Object.hasOwn(span.attributes, 'kvpg.misses')) {
     assert.ok(READS.has(expected.operation) && expected.outcome === 'success', 'read counts require a successful read');
+  }
+  if (['deletePrefix', 'cleanupExpired', 'close', 'schemaSql', 'migrate'].includes(expected.operation)) {
+    assert.ok(!Object.hasOwn(span.attributes, 'kvpg.keys'), 'this operation must omit key counts');
   }
   assert.deepEqual(span.events, [], 'no kvpg span events are defined');
   for (const link of span.links) {
