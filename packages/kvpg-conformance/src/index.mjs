@@ -389,6 +389,23 @@ export function conformance(name, makeSubject, options = {}) {
       }
       await store.set('negative-zero', -0);
       assert.ok(Object.is((await store.get('negative-zero')).value, 0), '-0 becomes 0');
+      const withToJSON = [1];
+      let callbacks = 0;
+      withToJSON.toJSON = () => { callbacks++; return undefined; };
+      const withAccessor = [1];
+      Object.defineProperty(withAccessor, '0', { enumerable: true, get() { callbacks++; return 2; } });
+      const withPrototype = [1];
+      Object.setPrototypeOf(withPrototype, { toJSON() { callbacks++; return null; } });
+      await store.set('array-kept', [1, 2]);
+      for (const value of [withToJSON, withAccessor, withPrototype]) {
+        await noCall(subject, () => rejectsWith(store.set('array-kept', value), 'invalid_value'));
+        await noCall(subject, () => rejectsWith(store.setMany([{ key: 'array-first', value: 1 }, { key: 'array-kept', value }]), 'invalid_value'));
+        assert.deepEqual(await store.get('array-kept'), HIT([1, 2]));
+        assert.deepEqual(await store.get('array-first'), MISS);
+      }
+      assert.equal(callbacks, 0, 'the codec must not invoke array accessors or serializers');
+      await store.set('array-kept', [3, { ok: true }]);
+      assert.deepEqual(await store.get('array-kept'), HIT([3, { ok: true }]));
       const cycle = {};
       cycle.self = cycle;
       for (const value of [undefined, () => 1, Symbol('s'), 10n, cycle, Number.NaN, Number.POSITIVE_INFINITY, [1, , 3],

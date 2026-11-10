@@ -19,11 +19,18 @@ export function jsonDomainProblem(value: unknown, path: Set<object> = new Set())
   path.add(value);
   try {
     if (Array.isArray(value)) {
+      const prototype = Object.getPrototypeOf(value);
+      if (prototype !== Array.prototype && prototype !== null) return 'an array with a custom prototype';
+      if (Object.getOwnPropertySymbols(value).length > 0) return 'an array with a symbol key';
       for (let index = 0; index < value.length; index++) {
-        if (!Object.hasOwn(value, index)) return 'a sparse array';
-        const problem = jsonDomainProblem(value[index], path);
+        const descriptor = Object.getOwnPropertyDescriptor(value, index);
+        if (descriptor === undefined) return 'a sparse array';
+        if (!('value' in descriptor)) return 'an array with an accessor element';
+        const problem = jsonDomainProblem(descriptor.value, path);
         if (problem) return problem;
       }
+      // Only indices and length belong to the JSON array domain. In particular, never invoke an own toJSON.
+      if (Object.getOwnPropertyNames(value).length !== value.length + 1) return 'an array with extra properties';
       return undefined;
     }
     const prototype = Object.getPrototypeOf(value);
