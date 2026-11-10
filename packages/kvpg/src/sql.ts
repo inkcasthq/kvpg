@@ -9,9 +9,9 @@ export function quoteIdentifier(name: string): string {
   return `"${name.replaceAll('"', '""')}"`;
 }
 
-/** A PostgreSQL string literal, with each embedded quote doubled. `standard_conforming_strings` keeps backslashes literal. */
+/** An explicit escape literal, independent of `standard_conforming_strings`. */
 export function quoteLiteral(text: string): string {
-  return `'${text.replaceAll("'", "''")}'`;
+  return `E'${text.replaceAll('\\', '\\\\').replaceAll("'", "''")}'`;
 }
 
 export interface TableShape {

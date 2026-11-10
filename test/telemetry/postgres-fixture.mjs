@@ -39,11 +39,14 @@ const utf8 = (text) => Buffer.byteLength(text, 'utf8');
 /** The stored key of S3 and RF8, written here without the package code, so that the fixture checks the store. */
 export const storedKey = (namespace, key) => `${utf8(namespace)}:${namespace}${key}`;
 
-/** The pg_cron command inside `SELECT cron.schedule('<job>', '<schedule>', '<command>');`, unquoted. */
-function scheduledCommand(ddl) {
-  const match = /SELECT cron\.schedule\('(?:[^']|'')*', '(?:[^']|'')*', '((?:[^']|'')*)'\);\s*$/.exec(ddl);
-  assert.ok(match, 'schemaSql() must end with the cron.schedule statement of the pg_cron policy');
-  return match[1].replaceAll("''", "'");
+/** PostgreSQL parses the schedule arguments, including explicit escape literals. */
+async function scheduledCommand(db, ddl) {
+  const start = ddl.indexOf('\nSELECT cron.schedule(');
+  assert.ok(start >= 0 && ddl.endsWith(');'), 'schemaSql() must end with the cron.schedule statement');
+  const args = ddl.slice(start + '\nSELECT cron.schedule('.length, -2);
+  const { rows } = await db.query(`SELECT ARRAY[${args}] AS parts`);
+  assert.equal(rows[0].parts.length, 3);
+  return rows[0].parts[2];
 }
 
 /** A Queryable over the pool with the fault, hold and count controls of README.md. */
@@ -139,7 +142,7 @@ export function makePostgresFixture(url) {
     const driver = new ControlledDriver(pool);
     const namespace = storeOptions.namespace ?? '';
     const { store, interval } = createWithCapturedTimer({ db: driver, ...storeOptions, table: { ...storeOptions.table, schema, table } });
-    const command = storeOptions.cleanup?.kind === 'pg_cron' ? scheduledCommand(await store.schemaSql()) : undefined;
+    const command = storeOptions.cleanup?.kind === 'pg_cron' ? await scheduledCommand(pool, await store.schemaSql()) : undefined;
     const encode = (value) => {
       if (storeOptions.codec) return storeOptions.codec.encode(value);
       return Buffer.from(JSON.stringify(value));
