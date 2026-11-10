@@ -23,6 +23,7 @@ All changes to the contract and the packages are listed here. The format follows
 - The PostgreSQL store of #2 (`createStore`), with spans and RED metrics through the OpenTelemetry API, tested on PostgreSQL 15 to 18.
 - The conformance suite of #3 (`@inkcasthq/kvpg-conformance`), with a reference store in memory and a planted-defect test.
 - The CI workflow: the tests on a PostgreSQL 15 to 18 matrix.
+- The build plan of release 1.0 (`docs/build-plan.md`): the phases after batch 1, each with its issues, files, tests and proof.
 
 ### Changed
 
