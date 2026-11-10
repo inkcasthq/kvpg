@@ -1,0 +1,16 @@
+{
+  "name": "@inkcasthq/kvpg-conformance",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The conformance suite of the kvpg cache contract, version 1, on node:test",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": { "types": "./src/index.d.ts", "default": "./src/index.mjs" }
+  },
+  "files": ["src"],
+  "engines": { "node": ">=22.14.0" },
+  "peerDependencies": { "@inkcasthq/kvpg": "0.0.0" },
+  "repository": { "type": "git", "url": "git+https://github.com/inkcasthq/kvpg.git", "directory": "packages/kvpg-conformance" },
+  "keywords": ["kvpg", "conformance", "cache", "contract"]
+}

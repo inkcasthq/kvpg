@@ -26,3 +26,47 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+
+  test:
+    # The store tests run on PostgreSQL 15, 16, 17 and 18 in one job, so no version case is pending.
+    # The images are the tags of the local test databases. The login is a throwaway test login.
+    name: test (Node ${{ matrix.node }}, PostgreSQL 15 to 18)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
+    services:
+      pg15:
+        image: postgres:15-alpine
+        env: { POSTGRES_USER: kvpg, POSTGRES_PASSWORD: kvpgtest, POSTGRES_DB: kvpg }
+        ports: ['5415:5432']
+        options: --health-cmd "pg_isready -U kvpg -d kvpg" --health-interval 2s --health-timeout 5s --health-retries 30
+      pg16:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: kvpg, POSTGRES_PASSWORD: kvpgtest, POSTGRES_DB: kvpg }
+        ports: ['5416:5432']
+        options: --health-cmd "pg_isready -U kvpg -d kvpg" --health-interval 2s --health-timeout 5s --health-retries 30
+      pg17:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: kvpg, POSTGRES_PASSWORD: kvpgtest, POSTGRES_DB: kvpg }
+        ports: ['5417:5432']
+        options: --health-cmd "pg_isready -U kvpg -d kvpg" --health-interval 2s --health-timeout 5s --health-retries 30
+      pg18:
+        image: postgres:18-alpine
+        env: { POSTGRES_USER: kvpg, POSTGRES_PASSWORD: kvpgtest, POSTGRES_DB: kvpg }
+        ports: ['5418:5432']
+        options: --health-cmd "pg_isready -U kvpg -d kvpg" --health-interval 2s --health-timeout 5s --health-retries 30
+    env:
+      KVPG_TEST_DATABASE_URLS: >-
+        postgres://kvpg:kvpgtest@127.0.0.1:5415/kvpg,postgres://kvpg:kvpgtest@127.0.0.1:5416/kvpg,postgres://kvpg:kvpgtest@127.0.0.1:5417/kvpg,postgres://kvpg:kvpgtest@127.0.0.1:5418/kvpg
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test

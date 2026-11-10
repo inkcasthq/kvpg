@@ -14,6 +14,8 @@ const PREFIX = 'KVPG_SYNTHETIC_PREFIX_704';
 const NAMESPACE = 'KVPG_SYNTHETIC_NAMESPACE_705';
 const MARKERS = [KEY, VALUE, CAUSE, PREFIX, NAMESPACE];
 const ENV = 'OTEL_NODEJS_INSTRUMENTATION_KVPG_ENABLED';
+// Owner decision #12 (2026-11-10): a read returns a tagged result.
+const HIT = Object.freeze({ found: true, value: VALUE });
 
 function control(fixture, name) {
   assert.equal(typeof fixture[name], 'function', `real-store fixture must implement ${name}`);
@@ -87,13 +89,14 @@ function invoke(store, operation) {
 }
 
 /**
- * Register shared tests for a real store fixture. No factory means issue #2 is pending.
+ * Register shared tests for a real store fixture. No factory means the suite is pending, with `options.unavailable` as the reason.
  * A fixture supplies its actual store, direct backend seeding, disposal, and fault controls.
  * See README.md for the control contract. A supplied but incomplete fixture fails.
  */
 export function telemetryConformance(name, makeFixture, options = {}) {
   if (makeFixture !== undefined) assert.equal(typeof makeFixture, 'function', 'fixture must be a function');
-  const pending = makeFixture === undefined ? '#2: the PostgreSQL store is not built; no substitute store is used' : false;
+  // Without a factory, the suite is pending with the reason of the caller, for example a database version that is not configured.
+  const pending = makeFixture === undefined ? (options.unavailable ?? '#2: no store factory is supplied; no substitute store is used') : false;
   const expected = { store: options.store, version: options.version };
   let session;
   describe(`${name} telemetry`, { concurrency: false }, () => {
@@ -106,7 +109,8 @@ export function telemetryConformance(name, makeFixture, options = {}) {
     });
     after(async () => { if (session) await session.shutdown(); });
 
-    const check = (title, body) => test(title, { skip: pending, timeout: 15_000 }, body);
+    // A case that needs a part outside this batch names its issue in options.pending (driverInstrumentation, adapter).
+    const check = (title, body, needs) => test(title, { skip: pending || (needs && options.pending?.[needs]) || false, timeout: 15_000 }, body);
     async function fixture(t, configuration = {}, entries = [{ key: KEY, value: VALUE }]) {
       const subject = await makeFixture({ telemetry: { enabled: true }, ...configuration });
       assert.ok(subject?.store, 'fixture must return a real store');
@@ -126,7 +130,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
     // These three cases precede the single global provider registration.
     check('T02/T08 API-only with no parent preserves results and exports no signals', async (t) => {
       const subject = await fixture(t);
-      const output = await observe(async () => assert.equal(await subject.store.get(KEY), VALUE));
+      const output = await observe(async () => assert.deepEqual(await subject.store.get(KEY), HIT));
       assertNoSignals(output);
     });
     check('T02/T08 API-only retains a valid upstream parent without exporting', async (t) => {
@@ -135,7 +139,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       const output = await observe(() => session.api.context.with(
         session.api.trace.setSpanContext(session.api.ROOT_CONTEXT, parent),
         async () => {
-          assert.equal(await subject.store.get(KEY), VALUE);
+          assert.deepEqual(await subject.store.get(KEY), HIT);
           assert.equal(session.api.trace.getSpanContext(session.api.context.active()).traceId, parent.traceId);
         }));
       assertNoSignals(output);
@@ -145,7 +149,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       await subject.store.get(KEY);
       session.install();
       const output = await observe(async () => {
-        assert.equal(await subject.store.get(KEY), VALUE);
+        assert.deepEqual(await subject.store.get(KEY), HIT);
         await assert.rejects(subject.store.get(''), { code: 'invalid_key' });
       });
       assert.equal(kvpgSpans(output).length, 2);
@@ -154,15 +158,18 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       assert.equal(kvpgLogs(output).length, 1);
       safe(output);
     });
-    check('T01 the runtime manifest depends on the API and excludes other OpenTelemetry packages', async () => {
+    // RF14: the API is a peer dependency, and the logs package an optional peer. No runtime dependency is OpenTelemetry.
+    check('T01 the runtime manifest takes the API as a peer and excludes other OpenTelemetry packages', async () => {
       const manifestURL = options.manifestURL ?? new URL('../../packages/kvpg/package.json', import.meta.url);
       const manifest = JSON.parse(await readFile(manifestURL, 'utf8'));
-      assert.equal(typeof manifest.dependencies?.['@opentelemetry/api'], 'string');
-      for (const dependencies of [manifest.dependencies, manifest.optionalDependencies, manifest.peerDependencies]) {
-        for (const name of Object.keys(dependencies ?? {})) {
-          if (name.startsWith('@opentelemetry/')) assert.equal(name, '@opentelemetry/api');
-          assert.notEqual(name, 'prom-client');
-        }
+      assert.equal(typeof manifest.peerDependencies?.['@opentelemetry/api'], 'string');
+      assert.equal(manifest.peerDependenciesMeta?.['@opentelemetry/api']?.optional, undefined, 'the API peer is required');
+      assert.equal(manifest.peerDependenciesMeta?.['@opentelemetry/api-logs']?.optional, true, 'the logs peer is optional');
+      for (const dependencies of [manifest.dependencies, manifest.optionalDependencies]) {
+        for (const name of Object.keys(dependencies ?? {})) assert.ok(!name.startsWith('@opentelemetry/') && name !== 'prom-client', name);
+      }
+      for (const name of Object.keys(manifest.peerDependencies)) {
+        assert.ok(['@opentelemetry/api', '@opentelemetry/api-logs'].includes(name), `unexpected peer ${name}`);
       }
     });
 
@@ -276,7 +283,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
     check('T03 telemetry off leaves safe operation hooks active', async (t) => {
       const hooks = [];
       const subject = await fixture(t, { telemetry: false, hooks: { onOperation: (event) => hooks.push(event) } });
-      const output = await observe(async () => assert.equal(await subject.store.get(KEY), VALUE));
+      const output = await observe(async () => assert.deepEqual(await subject.store.get(KEY), HIT));
       assertNoSignals(output);
       assert.deepEqual(output.calls, { traces: 0, metrics: 0, logs: 0 });
       assert.equal(hooks.length, 1);
@@ -297,7 +304,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       }));
       try { await deadline(hold.entered); }
       finally { hold.release(); }
-      assert.deepEqual(await Promise.all(work), [VALUE, VALUE]);
+      assert.deepEqual(await Promise.all(work), [HIT, HIT]);
       parents.forEach((parent) => parent.end());
       const output = session.since(start, await session.snapshot());
       const spans = kvpgSpans(output);
@@ -323,11 +330,11 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       }
       assert.equal(output.metrics.filter((point) => point.name === 'db.client.operation.duration').length, 0);
       safe(output);
-    });
+    }, 'driverInstrumentation');
     check('T05 driver retry attempts share one kvpg parent and one operation duration', async (t) => {
       const subject = await fixture(t, { driverInstrumentation: true });
       await control(subject, 'retryNextQuery')(new Error(CAUSE));
-      const output = await observe(async () => assert.equal(await subject.store.get(KEY), VALUE));
+      const output = await observe(async () => assert.deepEqual(await subject.store.get(KEY), HIT));
       const parents = kvpgSpans(output);
       const clients = output.spans.filter((span) => span.kind === 2 && span.instrumentationScope.name === subject.driverScope);
       assert.equal(parents.length, 1);
@@ -335,7 +342,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       assert.ok(clients.every((span) => span.parentSpanContext.spanId === parents[0].spanContext().spanId));
       assert.equal(durationCount(output.metrics), 1);
       safe(output);
-    });
+    }, 'driverInstrumentation');
     check('T05 W3C Trace Context stays in context and never becomes SQL data', async (t) => {
       const subject = await fixture(t);
       const carrier = { traceparent: `00-${'3'.repeat(32)}-${'4'.repeat(16)}-01` };
@@ -356,7 +363,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       await control(subject, 'failNextQuery')(cause);
       const output = await observe(async () => {
         await assert.rejects(subject.store.get(KEY), (error) => error.code === 'driver' && error.cause === cause);
-        assert.equal(await subject.store.get(KEY), VALUE);
+        assert.deepEqual(await subject.store.get(KEY), HIT);
       });
       assert.equal(kvpgSpans(output).length, 2);
       assert.equal(kvpgLogs(output).length, 1);
@@ -375,7 +382,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       const output = await observe(async () => {
         await assert.rejects(subject.store.get(KEY), (error) => error.code === 'codec' && error.cause === cause);
         fail = false;
-        assert.equal(await subject.store.get(KEY), VALUE);
+        assert.deepEqual(await subject.store.get(KEY), HIT);
       });
       assert.equal(kvpgLogs(output).length, 1);
       assert.equal(sum(output.metrics, 'kvpg.cache.hits'), 1);
@@ -408,7 +415,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
         onHookError(notice) { notices.push(notice); throw new Error(CAUSE); },
       } });
       let output;
-      const consoleCalls = await captureConsole(async () => { output = await observe(async () => assert.equal(await subject.store.get(KEY), VALUE)); });
+      const consoleCalls = await captureConsole(async () => { output = await observe(async () => assert.deepEqual(await subject.store.get(KEY), HIT)); });
       assert.equal(consoleCalls.length, 0);
       assert.equal(notices.length, 1);
       assertHookEvent(notices[0], { hookError: true });
@@ -443,7 +450,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       let consoleCalls;
       try {
         consoleCalls = await captureConsole(async () => {
-          assert.equal(await subject.store.get(KEY), VALUE);
+          assert.deepEqual(await subject.store.get(KEY), HIT);
           await assert.rejects(subject.store.get(''), { code: 'invalid_key' });
         });
       } finally { Object.assign(session.faults, { traces: false, metrics: false, logs: false }); }
@@ -451,7 +458,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       assertNoSignals(output);
       assert.equal(consoleCalls.length, 0);
       assert.ok(output.calls.logs <= 1, 'API errors must not recurse through logs');
-      const recovered = await observe(async () => assert.equal(await subject.store.get(KEY), VALUE));
+      const recovered = await observe(async () => assert.deepEqual(await subject.store.get(KEY), HIT));
       assert.equal(kvpgSpans(recovered).length, 1);
       assert.equal(durationCount(recovered.metrics), 1);
       assert.equal(sum(recovered.metrics, 'kvpg.cache.hits'), 1);
@@ -476,10 +483,10 @@ export function telemetryConformance(name, makeFixture, options = {}) {
     check('T09 duplicate live and expired read occurrences have exact hit and miss totals', async (t) => {
       const subject = await fixture(t, {}, [{ key: KEY, value: VALUE }, { key: 'expired', value: VALUE, expiresAt: new Date(0) }]);
       const output = await observe(async () => {
-        assert.equal(await subject.store.get(KEY), VALUE);
+        assert.deepEqual(await subject.store.get(KEY), HIT);
         const results = await subject.store.getMany([KEY, KEY, 'missing', 'expired']);
         assert.equal(results.length, 4);
-        assert.deepEqual(results.slice(0, 2), [VALUE, VALUE]);
+        assert.deepEqual(results, [HIT, HIT, { found: false }, { found: false }]);
         assert.equal(await subject.store.has('expired'), false);
         assert.equal((await subject.store.ttl(KEY)).state, 'persistent');
         assert.equal((await subject.store.ttl('expired')).state, 'missing');
@@ -497,6 +504,8 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       const definitions = new Map(session.instruments.map((entry) => [entry.name, entry]));
       for (const [name, method, unit] of [
         ['kvpg.operation.duration', 'createHistogram', 's'],
+        ['kvpg.operation.calls', 'createCounter', '{call}'],
+        ['kvpg.operation.errors', 'createCounter', '{error}'],
         ['kvpg.cache.hits', 'createCounter', '{key}'],
         ['kvpg.cache.misses', 'createCounter', '{key}'],
         ['kvpg.cleanup.rows_deleted', 'createCounter', '{row}'],
@@ -504,6 +513,8 @@ export function telemetryConformance(name, makeFixture, options = {}) {
         assert.equal(definitions.get(name)?.method, method);
         assert.equal(definitions.get(name)?.options.unit, unit);
       }
+      assert.deepEqual(definitions.get('kvpg.operation.duration')?.options.advice?.explicitBucketBoundaries,
+        [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10], 'RF16 bucket advice');
     });
     check('T09 partial cleanup counts confirmed rows once across failure and recovery', async (t) => {
       const subject = await fixture(t, {}, [0, 1, 2].map((index) => ({ key: `${KEY}-${index}`, value: VALUE, expiresAt: new Date(0) })));
@@ -523,7 +534,7 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       const subject = await fixture(t, { telemetry: { enabled: true, slowOperationMs: 1 } });
       await control(subject, 'delayNextQuery')(10);
       const output = await observe(async () => {
-        assert.equal(await subject.store.get(KEY), VALUE);
+        assert.deepEqual(await subject.store.get(KEY), HIT);
         await assert.rejects(subject.store.get(''), { code: 'invalid_key' });
       });
       assert.deepEqual(kvpgLogs(output).map((record) => record.eventName), ['kvpg.operation.slow', 'kvpg.operation.failed']);
@@ -586,6 +597,6 @@ export function telemetryConformance(name, makeFixture, options = {}) {
       assert.equal(durationCount(output.metrics), 1);
       assert.equal(sum(output.metrics, 'kvpg.cache.hits'), 1);
       safe(output);
-    });
+    }, 'adapter');
   });
 }

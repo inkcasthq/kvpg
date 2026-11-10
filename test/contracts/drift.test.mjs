@@ -147,9 +147,10 @@ function compile(schemas) {
   try {
     const { text, labels } = driftSource(schemas, directory);
     writeFileSync(join(directory, 'drift.ts'), text);
+    // The package sources use Node.js globals, so the types are those of packages/kvpg/tsconfig.json.
     writeFileSync(join(directory, 'tsconfig.json'), JSON.stringify({
       extends: join(ROOT, 'tsconfig.base.json'),
-      compilerOptions: { noEmit: true, types: [], declaration: false, sourceMap: false },
+      compilerOptions: { noEmit: true, types: ['node'], declaration: false, sourceMap: false },
       files: ['drift.ts'],
     }));
     try {

@@ -226,6 +226,7 @@ Source: OpenTelemetry semantic conventions 1.45.0, database metrics.
 Decision: the store needs no driver package at runtime. It takes any `Queryable`.
 The qualified driver of 1.0 is `pg` (node-postgres) 8. The tests and the examples use it. postgres.js follows through the adapter of #5.
 Reason: a `pg` Pool and a `pg` Client already have the `Queryable` shape (extension.ts). `pg` sends each query as an unnamed statement, so PostgreSQL plans it with the parameter values.
+Measured: with `pg` 8.23.1, the store tests pass on PostgreSQL 15.19, 16.15, 17.11 and 18.6. A generic plan of each key statement also uses the primary key index. Thus a driver with named statements keeps the index (`test/store/postgresql.test.mjs`, R09 and R10).
 Source: `packages/kvpg/src/extension.ts:5`, issue #5 ("A pg Pool fits both and a pg Client fits Queryable only").
 
 ### RF18. The default codec
@@ -268,8 +269,9 @@ Decision: the workspace adds these exact-version development dependencies. The p
 | `@opentelemetry/resources` | 2.12.1 | The test resource. |
 | `@opentelemetry/context-async-hooks` | 2.12.1 | The test context manager. |
 | `@opentelemetry/core` | 2.12.1 | The test propagator. |
+| `@types/node` | 22.20.5 | The types of the Node.js globals that the store uses (RF26). |
 
-Reason: OD5 selects the SDK 2 generation, and the telemetry tests of `test/telemetry/` need one SDK of that generation. The lockfile adds 19 transitive packages of these 10 and removes none.
+Reason: OD5 selects the SDK 2 generation, and the telemetry tests of `test/telemetry/` need one SDK of that generation. The lockfile adds 19 transitive packages of the first 10 and removes none. `@types/node` adds one: `undici-types` 6.21.0.
 Source: OD5, `package.json`, `package-lock.json`.
 
 ### RF22. `expire` needs an expiry
@@ -286,3 +288,39 @@ The drift test converts each schema to a TypeScript type and compares it with th
 Telemetry records have a normal form (`contracts/README.md`), so one schema covers each signal.
 Reason: a branching combinator reports one error for each branch. Then a test cannot tell which rule refused a sample.
 Source: Ajv 8.20.0 error output of `test/contracts/gate.test.mjs`, `node_modules/typescript/package.json` 7.0.2.
+
+### RF24. The codes of input refusals
+
+Decision: each refused input gives the code of its argument.
+- An options object of `set`, `setMany` or `expire` that is not an object, or an `ifAbsent` that is not a boolean, gives `invalid_ttl`.
+- An entry of `setMany` that is not an object gives `invalid_key`.
+- A batch of `getMany`, `setMany` or `deleteMany` that is not an array gives `invalid_batch`. The error enums of `getMany` and `deleteMany` in `contracts/` include it.
+- The store checks every input before its first database call.
+Reason: S12 has one code for each kind of argument. The options of a write are the expiry options of S4 and the `ifAbsent` flag of S6. A caller in JavaScript can pass any value, and a TypeError breaks S12.
+Source: S4, S6, S12, `packages/kvpg/src/store.ts` (`#expiry`, `#writeOptions`, `#batchSize`).
+
+### RF25. The peer range of the logs package
+
+Decision: `@opentelemetry/api-logs` is an optional peer dependency with the range `>=0.200.0 <1.0.0`. If the installed logger has no `enabled()` method, the store treats the logger as on.
+Reason: the logs package has no 1.x release. `Logger.enabled()` is in 0.223.1, the version that the tests use. Versions before 0.223.1 are not measured.
+Source: `packages/kvpg/package.json`, `packages/kvpg/src/telemetry.ts` (`registeredLogger`), RF15.
+
+### RF26. Node.js types and the conformance package
+
+Decision: the package compiles with the types of `@types/node` 22, because it uses `TextEncoder`, `setInterval`, `process.env` and `performance`. The engine range stays `>=22.14.0`.
+The conformance suite is the workspace package `@inkcasthq/kvpg-conformance`. It is private until the release of #8. Its peer dependency is `@inkcasthq/kvpg`, and it has no other dependency.
+Reason: the types of Node 22 match the lowest supported engine. A separate package lets another store run the suite without the PostgreSQL store.
+Source: `packages/kvpg/tsconfig.json`, `packages/kvpg-conformance/package.json`, `package-lock.json`.
+
+### RF27. The reference store and the planted defect
+
+Decision: the suite has a reference store in memory, in `packages/kvpg-conformance/test/memory-store.mjs`. It is not part of the package. Every rule passes on it.
+With the planted expired-read defect, `get` returns expired entries. A child run then fails S1, S4 and S9 and passes the 17 other rule tests. These three rules read an expired entry with `get`.
+Reason: R15 asks for proof that the suite finds an expired read. The exact set of failed rules shows that each failure names a rule that the defect breaks.
+Source: spec-1.0.md R15, `packages/kvpg-conformance/test/planted.test.mjs`.
+
+### RF28. `migrate()` with the pg_cron policy
+
+Decision: with the `pg_cron` policy, `migrate()` applies all of `schemaSql()`, and the `cron.schedule` statement too. Without the extension, `migrate()` rejects with `driver`, and the cause is the error of PostgreSQL.
+Reason: R04 asks that `schemaSql()` and `migrate()` describe and apply the same objects. A migration that skips the schedule silently gives a store without cleanup.
+Source: spec-1.0.md R04 and R10, `test/store/postgresql.test.mjs` (R10 pg_cron case: `schema "cron" does not exist` on the four test databases).

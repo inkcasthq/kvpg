@@ -335,6 +335,7 @@ A failed interval invocation does not stop the timer.
 The `pg_cron` policy adds a `cron.schedule` statement to the output of `schemaSql()`.
 The scheduled command is the cleanup statement of one batch, with the namespace frame as a SQL literal.
 The application installs the extension. kvpg does not claim JavaScript observations for database-only execution.
+With this policy, `migrate()` also applies the `cron.schedule` statement, so it needs the extension. [RF28]
 None of the four test databases has `pg_cron`, so its runtime acceptance waits for a database that has it.
 All policies MUST preserve read behavior under S1. [POLICY], [S1]
 
@@ -727,3 +728,4 @@ Local source locations refer to the files of this release.
 [RF19]: decisions.md#refinements "Refinement RF19"
 [RF20]: decisions.md#refinements "Refinement RF20"
 [RF22]: decisions.md#refinements "Refinement RF22"
+[RF28]: decisions.md#refinements "Refinement RF28"

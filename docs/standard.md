@@ -53,9 +53,9 @@ S12. Errors. Each failure rejects with one `KvError`, with one of these codes:
 | Code | Failure |
 |---|---|
 | `invalid_key` | The key or the prefix breaks S3 or S8 |
-| `invalid_ttl` | The expiry options break S4 |
+| `invalid_ttl` | The expiry options break S4, or the write options are not an object, or `ifAbsent` is not a boolean |
 | `invalid_value` | The codec cannot encode the value |
-| `invalid_batch` | A key is two or more times in one `setMany`, or a batch argument is not valid |
+| `invalid_batch` | A key is twice or more in one `setMany`, a batch is not an array, or the cleanup options are not valid |
 | `value_too_large` | The encoded value is larger than the `maxValueBytes` limit (S14) |
 | `batch_too_large` | A batch is larger than the `maxBatchSize` limit (S14) |
 | `codec` | The codec cannot decode a stored value |

@@ -14,12 +14,15 @@ All changes to the contract and the packages are listed here. The format follows
 - `bench/prefix-plan.mjs`: the plans of the prefix delete on PostgreSQL 15 to 18.
 - The contract payloads in `contracts/` (JSON Schema 2020-12) with valid and invalid samples, the gate test and the drift test.
 - The contract types of version 1: `ReadResult`, `WriteOutcome`, `Limits`, `CleanupOptions`, `KV_ERROR_CODES`, `OPERATIONS`, `StoreOptions` and `PostgresStore`.
-- Telemetry conformance assertions and pending store tests, with an in-memory exporter harness and tests for both Prometheus routes.
+- Telemetry conformance assertions and store tests, with in-memory exporters and tests for both Prometheus routes.
 - The combined 1.0 specification (`docs/spec-1.0.md`), with behavior, implementation logic, acceptance tests, and open owner decisions.
 - The native telemetry specification (`docs/telemetry.md`), with open owner choices for the default and supported API/SDK versions.
 - The cache contract, version 0 (`docs/standard.md`), and its TypeScript types.
 - The extension points: driver, codec, hooks, cleanup policy and table options.
 - The design of the PostgreSQL store (`docs/design.md`).
+- The PostgreSQL store of #2 (`createStore`), with spans and RED metrics through the OpenTelemetry API, tested on PostgreSQL 15 to 18.
+- The conformance suite of #3 (`@inkcasthq/kvpg-conformance`), with a reference store in memory and a planted-defect test.
+- The CI workflow: the tests on a PostgreSQL 15 to 18 matrix.
 
 ### Changed
 
@@ -30,3 +33,5 @@ All changes to the contract and the packages are listed here. The format follows
 - The hook types carry safe fields only: `OperationEvent.errorCode` replaces the error object, and `onHookError` gets `{ code: 'hook' }`.
 - `expire` without `ttlMs` and `expiresAt` rejects with `invalid_ttl`.
 - `npm test` builds the package first and runs the contract tests.
+- `getMany` and `deleteMany` reject a batch that is not an array with `invalid_batch`.
+- A write option that is not an object, or an `ifAbsent` that is not a boolean, rejects with `invalid_ttl`.

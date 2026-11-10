@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/operations/deleteMany.schema.json",
   "title": "kvpg contract v1: deleteMany",
-  "description": "Rule S7. The count of live entries deleted. A repeated key counts once.",
+  "description": "Rule S7. The count of live entries deleted. A repeated key counts once. A batch that is not an array: invalid_batch.",
   "$defs": {
     "input": {
       "description": "The arguments, in order.",
@@ -31,6 +31,7 @@
         "code": {
           "enum": [
             "invalid_key",
+            "invalid_batch",
             "batch_too_large",
             "driver",
             "closed"
