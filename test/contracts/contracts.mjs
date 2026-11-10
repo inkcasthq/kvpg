@@ -11,6 +11,18 @@ const UTF8_RULES = Object.freeze(['maxBytes', 'wellFormed', 'noNul']);
 // RFC 3339 date-time, the payload form of a Date (contracts/README.md).
 const DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
+/** Date.parse normalizes impossible days and hour 24, so test those fields before accepting the instant. */
+function validDateTime(text) {
+  if (!DATE_TIME.test(text) || Number.isNaN(Date.parse(text))) return false;
+  const year = Number(text.slice(0, 4));
+  const month = Number(text.slice(5, 7));
+  const day = Number(text.slice(8, 10));
+  const hour = Number(text.slice(11, 13));
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day >= 1 && day <= days[month - 1] && hour < 24;
+}
+
 /** The rule of `x-kvpg-utf8` that `text` breaks, or undefined. Rules S3 and S8. */
 export function utf8Violation(text, rules) {
   if (rules.wellFormed && !text.isWellFormed()) return 'wellFormed';
@@ -42,7 +54,7 @@ export function createAjv(files = schemaFiles()) {
   // strictTuples is off: an optional trailing argument makes minItems lower than the tuple length, and items: false
   // still closes the tuple. Every other strict rule is on.
   const ajv = new Ajv2020({ strict: true, strictRequired: false, strictTuples: false, allErrors: true });
-  ajv.addFormat('date-time', { type: 'string', validate: (text) => DATE_TIME.test(text) && !Number.isNaN(Date.parse(text)) });
+  ajv.addFormat('date-time', { type: 'string', validate: validDateTime });
   ajv.addKeyword({
     keyword: 'x-kvpg-utf8',
     type: 'string',

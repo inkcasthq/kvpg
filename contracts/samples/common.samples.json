@@ -664,6 +664,58 @@
       "data": -1,
       "keyword": "minimum",
       "instancePath": ""
+    },
+    {
+      "name": "a non-leap February 29",
+      "valid": false,
+      "data": "2026-02-29T12:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "a February 30",
+      "valid": false,
+      "data": "2024-02-30T12:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "an April 31",
+      "valid": false,
+      "data": "2026-04-31T12:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "a non-leap century",
+      "valid": false,
+      "data": "1900-02-29T12:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "hour 24",
+      "valid": false,
+      "data": "2026-01-01T24:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "a leap February 29",
+      "valid": true,
+      "data": "2024-02-29T12:00:00Z",
+      "def": "expiresAt"
+    },
+    {
+      "name": "a leap century",
+      "valid": true,
+      "data": "2000-02-29T12:00:00Z",
+      "def": "expiresAt"
     }
   ]
 }
