@@ -1,0 +1,378 @@
+{
+  "schema": "telemetry/metrics.schema.json",
+  "cases": [
+    {
+      "name": "a successful duration",
+      "valid": true,
+      "data": {
+        "name": "kvpg.operation.duration",
+        "instrument": "histogram",
+        "unit": "s",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        },
+        "value": {
+          "count": 1,
+          "sum": 0.002
+        }
+      }
+    },
+    {
+      "name": "a failed duration",
+      "valid": true,
+      "data": {
+        "name": "kvpg.operation.duration",
+        "instrument": "histogram",
+        "unit": "s",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "error.type": "driver",
+          "kvpg.outcome": "error"
+        },
+        "value": {
+          "count": 2,
+          "sum": 0.01
+        }
+      }
+    },
+    {
+      "name": "a call",
+      "valid": true,
+      "data": {
+        "name": "kvpg.operation.calls",
+        "instrument": "counter",
+        "unit": "{call}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        },
+        "value": 3
+      }
+    },
+    {
+      "name": "a failed call",
+      "valid": true,
+      "data": {
+        "name": "kvpg.operation.calls",
+        "instrument": "counter",
+        "unit": "{call}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error"
+        },
+        "value": 1
+      }
+    },
+    {
+      "name": "an error",
+      "valid": true,
+      "data": {
+        "name": "kvpg.operation.errors",
+        "instrument": "counter",
+        "unit": "{error}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "error.type": "driver"
+        },
+        "value": 1
+      }
+    },
+    {
+      "name": "hits",
+      "valid": true,
+      "data": {
+        "name": "kvpg.cache.hits",
+        "instrument": "counter",
+        "unit": "{key}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground"
+        },
+        "value": 2
+      }
+    },
+    {
+      "name": "misses of getMany",
+      "valid": true,
+      "data": {
+        "name": "kvpg.cache.misses",
+        "instrument": "counter",
+        "unit": "{key}",
+        "attributes": {
+          "kvpg.operation": "getMany",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground"
+        },
+        "value": 1
+      }
+    },
+    {
+      "name": "rows deleted by an interval cleanup",
+      "valid": true,
+      "data": {
+        "name": "kvpg.cleanup.rows_deleted",
+        "instrument": "counter",
+        "unit": "{row}",
+        "attributes": {
+          "kvpg.operation": "cleanupExpired",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "interval"
+        },
+        "value": 10
+      }
+    },
+    {
+      "name": "a duration counter",
+      "valid": false,
+      "data": {
+        "name": "kvpg.operation.duration",
+        "instrument": "counter",
+        "unit": "s",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        },
+        "value": {
+          "count": 1,
+          "sum": 0.1
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/instrument"
+    },
+    {
+      "name": "a duration in ms",
+      "valid": false,
+      "data": {
+        "name": "kvpg.operation.duration",
+        "instrument": "histogram",
+        "unit": "ms",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        },
+        "value": {
+          "count": 1,
+          "sum": 1
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/unit"
+    },
+    {
+      "name": "a duration without sum",
+      "valid": false,
+      "data": {
+        "name": "kvpg.operation.duration",
+        "instrument": "histogram",
+        "unit": "s",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        },
+        "value": {
+          "count": 1
+        }
+      },
+      "keyword": "required",
+      "instancePath": "/value",
+      "params": {
+        "missingProperty": "sum"
+      }
+    },
+    {
+      "name": "a failed duration without error.type",
+      "valid": false,
+      "data": {
+        "name": "kvpg.operation.duration",
+        "instrument": "histogram",
+        "unit": "s",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error"
+        },
+        "value": {
+          "count": 1,
+          "sum": 0.1
+        }
+      },
+      "keyword": "required",
+      "instancePath": "/attributes",
+      "params": {
+        "missingProperty": "error.type"
+      }
+    },
+    {
+      "name": "a call with error.type",
+      "valid": false,
+      "data": {
+        "name": "kvpg.operation.calls",
+        "instrument": "counter",
+        "unit": "{call}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "error.type": "driver",
+          "kvpg.outcome": "error"
+        },
+        "value": 1
+      },
+      "keyword": "false schema",
+      "instancePath": "/attributes/error.type"
+    },
+    {
+      "name": "an error with an outcome",
+      "valid": false,
+      "data": {
+        "name": "kvpg.operation.errors",
+        "instrument": "counter",
+        "unit": "{error}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "error.type": "driver",
+          "kvpg.outcome": "error"
+        },
+        "value": 1
+      },
+      "keyword": "false schema",
+      "instancePath": "/attributes/kvpg.outcome"
+    },
+    {
+      "name": "an error without error.type",
+      "valid": false,
+      "data": {
+        "name": "kvpg.operation.errors",
+        "instrument": "counter",
+        "unit": "{error}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground"
+        },
+        "value": 1
+      },
+      "keyword": "required",
+      "instancePath": "/attributes",
+      "params": {
+        "missingProperty": "error.type"
+      }
+    },
+    {
+      "name": "hits of a write",
+      "valid": false,
+      "data": {
+        "name": "kvpg.cache.hits",
+        "instrument": "counter",
+        "unit": "{key}",
+        "attributes": {
+          "kvpg.operation": "set",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground"
+        },
+        "value": 1
+      },
+      "keyword": "enum",
+      "instancePath": "/attributes/kvpg.operation"
+    },
+    {
+      "name": "a zero increment",
+      "valid": false,
+      "data": {
+        "name": "kvpg.cache.hits",
+        "instrument": "counter",
+        "unit": "{key}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground"
+        },
+        "value": 0
+      },
+      "keyword": "minimum",
+      "instancePath": "/value"
+    },
+    {
+      "name": "a key count on a call",
+      "valid": false,
+      "data": {
+        "name": "kvpg.operation.calls",
+        "instrument": "counter",
+        "unit": "{call}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.keys": 1,
+          "kvpg.outcome": "success"
+        },
+        "value": 1
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "/attributes",
+      "params": {
+        "additionalProperty": "kvpg.keys"
+      }
+    },
+    {
+      "name": "rows deleted by a get",
+      "valid": false,
+      "data": {
+        "name": "kvpg.cleanup.rows_deleted",
+        "instrument": "counter",
+        "unit": "{row}",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground"
+        },
+        "value": 1
+      },
+      "keyword": "const",
+      "instancePath": "/attributes/kvpg.operation"
+    },
+    {
+      "name": "a database metric",
+      "valid": false,
+      "data": {
+        "name": "db.client.operation.duration",
+        "instrument": "histogram",
+        "unit": "s",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        },
+        "value": {
+          "count": 1,
+          "sum": 0.1
+        }
+      },
+      "keyword": "enum",
+      "instancePath": "/name"
+    }
+  ]
+}

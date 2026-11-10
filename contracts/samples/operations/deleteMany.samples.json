@@ -1,0 +1,80 @@
+{
+  "schema": "operations/deleteMany.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "a repeated key",
+      "valid": true,
+      "data": [
+        [
+          "a",
+          "a"
+        ]
+      ]
+    },
+    {
+      "def": "input",
+      "name": "a number key",
+      "valid": false,
+      "data": [
+        [
+          1
+        ]
+      ],
+      "keyword": "type",
+      "instancePath": "/0/0"
+    },
+    {
+      "def": "result",
+      "name": "one live entry",
+      "valid": true,
+      "data": 1
+    },
+    {
+      "def": "result",
+      "name": "a negative count",
+      "valid": false,
+      "data": -1,
+      "keyword": "minimum",
+      "instancePath": ""
+    },
+    {
+      "def": "error",
+      "name": "a batch_too_large error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "batch_too_large",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "invalid_value is not a code of deleteMany",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_value",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "batch_too_large",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

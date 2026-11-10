@@ -271,3 +271,18 @@ Decision: the workspace adds these exact-version development dependencies. The p
 
 Reason: OD5 selects the SDK 2 generation, and the telemetry tests of `test/telemetry/` need one SDK of that generation. The lockfile adds 19 transitive packages of these 10 and removes none.
 Source: OD5, `package.json`, `package-lock.json`.
+
+### RF22. `expire` needs an expiry
+
+Decision: `expire` needs `ttlMs` or `expiresAt`. With neither, it rejects with `invalid_ttl`.
+Reason: for a write, no expiry option means the default time to live (S4). For `expire`, no option has no clear meaning, because `persist` removes an expiry. A refusal shows the caller error at once.
+Source: S4, S9, `contracts/common.schema.json` (`expireOptions`).
+
+### RF23. The form of the contract payloads
+
+Decision: the schemas of `contracts/` use no `oneOf`, `anyOf` or `not`. A union with a tag, such as the read result, uses `if`, `then` and `else` on the tag.
+Each invalid sample breaks one rule and names its keyword and path. For each invalid sample, the gate test requires that Ajv reports exactly that one error.
+The drift test converts each schema to a TypeScript type and compares it with the package type through `tsc`. TypeScript 7.0.2 has only the `tsc` binary and no compiler interface for JavaScript.
+Telemetry records have a normal form (`contracts/README.md`), so one schema covers each signal.
+Reason: a branching combinator reports one error for each branch. Then a test cannot tell which rule refused a sample.
+Source: Ajv 8.20.0 error output of `test/contracts/gate.test.mjs`, `node_modules/typescript/package.json` 7.0.2.

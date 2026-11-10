@@ -42,7 +42,7 @@ S7. Batches:
 
 S8. `deletePrefix` deletes each entry whose key starts with the prefix, compared byte by byte. The characters `%`, `_` and `\` in the prefix have no special meaning. It returns the count of live entries that it deleted. An empty prefix rejects with `invalid_key`, so that one call cannot empty the store.
 
-S9. `ttl` returns `missing`, `persistent`, or `expiring` with the milliseconds left, rounded down. `expire` and `persist` change only a live entry. If no live entry has the key, they return false.
+S9. `ttl` returns `missing`, `persistent`, or `expiring` with the milliseconds left, rounded down. `expire` and `persist` change only a live entry. If no live entry has the key, they return false. `expire` needs `ttlMs` or `expiresAt`. With neither, it rejects with `invalid_ttl`.
 
 S10. `cleanupExpired` deletes expired entries in batches of `batchSize` (default 5,000). It stops after `maxBatches` (default no limit). A batch that deletes fewer rows than its size is also the last batch. Two cleanups at the same time do not block each other and do not delete a row twice. A cleanup never deletes a live entry.
 

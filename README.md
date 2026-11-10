@@ -20,7 +20,9 @@ kvpg also writes the behavior down as a standard (`docs/standard.md`), with a co
 | `docs/telemetry.md` | The native telemetry contract, T01 to T13 | Written |
 | `docs/design.md` | The table, the SQL and the choices, with sources | Written |
 | `docs/extending.md` | The five extension points | Written |
-| `packages/kvpg` | `@inkcasthq/kvpg`: the contract types and the extension points | Types written, store planned (#2) |
+| `contracts/` | The contract payloads as JSON Schema 2020-12, with samples | Written |
+| `test/contracts/` | The contract gate test and the drift test of types against schemas | Written |
+| `packages/kvpg` | `@inkcasthq/kvpg`: the contract types (version 1) and the extension points | Types written, store planned (#2) |
 | `packages/kvpg-conformance` | `@inkcasthq/kvpg-conformance`: the test suite of the contract | Planned (#3) |
 | `packages/kvpg-keyv` | `@inkcasthq/kvpg-keyv`: a Keyv storage adapter | Planned (#4) |
 

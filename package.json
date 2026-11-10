@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc --build packages/kvpg",
     "check": "tsc --build packages/kvpg --force",
-    "test": "node --test test/telemetry/*.test.mjs"
+    "pretest": "npm run build",
+    "test": "node --test test/telemetry/*.test.mjs test/contracts/*.test.mjs"
   },
   "devDependencies": {
     "@opentelemetry/api": "1.9.1",

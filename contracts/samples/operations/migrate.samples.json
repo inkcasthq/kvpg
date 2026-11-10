@@ -1,0 +1,73 @@
+{
+  "schema": "operations/migrate.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "no arguments",
+      "valid": true,
+      "data": []
+    },
+    {
+      "def": "input",
+      "name": "an argument",
+      "valid": false,
+      "data": [
+        "public"
+      ],
+      "keyword": "maxItems",
+      "instancePath": ""
+    },
+    {
+      "def": "result",
+      "name": "no value",
+      "valid": true,
+      "data": null
+    },
+    {
+      "def": "result",
+      "name": "a count",
+      "valid": false,
+      "data": 1,
+      "keyword": "type",
+      "instancePath": ""
+    },
+    {
+      "def": "error",
+      "name": "a schema error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "schema",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "invalid_key is not a code of migrate",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_key",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "schema",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

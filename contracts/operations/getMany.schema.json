@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/operations/getMany.schema.json",
+  "title": "kvpg contract v1: getMany",
+  "description": "Rules S1 and S7. One read result for each key, in input order.",
+  "$defs": {
+    "input": {
+      "description": "The arguments, in order.",
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key"
+          }
+        }
+      ],
+      "minItems": 1,
+      "items": false
+    },
+    "result": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/readResult"
+      }
+    },
+    "error": {
+      "description": "The KvError of a failure. The cause stays with the caller and is not part of the payload (S13).",
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "KvError"
+        },
+        "code": {
+          "enum": [
+            "invalid_key",
+            "batch_too_large",
+            "codec",
+            "driver",
+            "closed"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

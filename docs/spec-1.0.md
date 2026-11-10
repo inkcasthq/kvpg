@@ -170,6 +170,7 @@ Zero, negative, fractional, unsafe, and nonfinite `ttlMs` inputs MUST reject wit
 A past absolute date makes the written entry expired immediately.
 With neither expiry field, the store uses its default lifetime or persistence.
 `expire` uses the same expiry validation and changes only a live entry.
+`expire` needs `ttlMs` or `expiresAt`. With neither, it rejects with `invalid_ttl`. [RF22]
 
 `persist` removes the expiry only from a live entry.
 These methods MUST return false for missing or expired entries. [S9]
@@ -725,3 +726,4 @@ Local source locations refer to the files of this release.
 [RF18]: decisions.md#refinements "Refinement RF18"
 [RF19]: decisions.md#refinements "Refinement RF19"
 [RF20]: decisions.md#refinements "Refinement RF20"
+[RF22]: decisions.md#refinements "Refinement RF22"

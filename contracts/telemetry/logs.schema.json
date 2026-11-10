@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/telemetry/logs.schema.json",
+  "title": "kvpg telemetry: one log record",
+  "description": "One kvpg log record in normal form: event name, severity number, fixed body and attributes (T10).",
+  "type": "object",
+  "required": [
+    "eventName",
+    "severityNumber",
+    "body",
+    "attributes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "eventName": {
+      "enum": [
+        "kvpg.operation.failed",
+        "kvpg.operation.slow",
+        "kvpg.cleanup.recovered",
+        "kvpg.hook.failed"
+      ]
+    },
+    "severityNumber": {
+      "enum": [
+        9,
+        13,
+        17
+      ]
+    },
+    "body": {
+      "type": "string"
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kvpg.operation",
+        "kvpg.store",
+        "kvpg.trigger",
+        "kvpg.outcome",
+        "kvpg.duration"
+      ],
+      "properties": {
+        "kvpg.operation": {
+          "$ref": "../common.schema.json#/$defs/operation"
+        },
+        "kvpg.store": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A fixed implementation identifier, such as postgresql (T07)."
+        },
+        "kvpg.trigger": {
+          "enum": [
+            "foreground",
+            "interval"
+          ]
+        },
+        "kvpg.outcome": {
+          "enum": [
+            "success",
+            "error"
+          ]
+        },
+        "error.type": {
+          "enum": [
+            "invalid_key",
+            "invalid_ttl",
+            "invalid_value",
+            "invalid_batch",
+            "value_too_large",
+            "batch_too_large",
+            "codec",
+            "driver",
+            "schema",
+            "closed",
+            "hook"
+          ]
+        },
+        "kvpg.keys": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "kvpg.rows_deleted": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "kvpg.batches": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "kvpg.duration": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds."
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "eventName": {
+            "const": "kvpg.operation.failed"
+          }
+        },
+        "required": [
+          "eventName"
+        ]
+      },
+      "then": {
+        "properties": {
+          "severityNumber": {
+            "const": 17
+          },
+          "body": {
+            "const": "kvpg operation failed"
+          },
+          "attributes": {
+            "type": "object",
+            "required": [
+              "error.type"
+            ],
+            "properties": {
+              "kvpg.outcome": {
+                "const": "error"
+              },
+              "error.type": {
+                "$ref": "../common.schema.json#/$defs/errorCode"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventName": {
+            "const": "kvpg.operation.slow"
+          }
+        },
+        "required": [
+          "eventName"
+        ]
+      },
+      "then": {
+        "properties": {
+          "severityNumber": {
+            "const": 13
+          },
+          "body": {
+            "const": "kvpg operation slow"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.outcome": {
+                "const": "success"
+              },
+              "error.type": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventName": {
+            "const": "kvpg.cleanup.recovered"
+          }
+        },
+        "required": [
+          "eventName"
+        ]
+      },
+      "then": {
+        "properties": {
+          "severityNumber": {
+            "const": 9
+          },
+          "body": {
+            "const": "kvpg cleanup recovered"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.outcome": {
+                "const": "success"
+              },
+              "error.type": false,
+              "kvpg.operation": {
+                "const": "cleanupExpired"
+              },
+              "kvpg.trigger": {
+                "const": "interval"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventName": {
+            "const": "kvpg.hook.failed"
+          }
+        },
+        "required": [
+          "eventName"
+        ]
+      },
+      "then": {
+        "properties": {
+          "severityNumber": {
+            "const": 17
+          },
+          "body": {
+            "const": "kvpg hook failed"
+          },
+          "attributes": {
+            "type": "object",
+            "required": [
+              "error.type"
+            ],
+            "properties": {
+              "kvpg.outcome": {
+                "const": "error"
+              },
+              "error.type": {
+                "const": "hook"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "schema": "operations/persist.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "one key",
+      "valid": true,
+      "data": [
+        "k"
+      ]
+    },
+    {
+      "def": "input",
+      "name": "a number key",
+      "valid": false,
+      "data": [
+        5
+      ],
+      "keyword": "type",
+      "instancePath": "/0"
+    },
+    {
+      "def": "result",
+      "name": "persisted",
+      "valid": true,
+      "data": true
+    },
+    {
+      "def": "result",
+      "name": "a count",
+      "valid": false,
+      "data": 0,
+      "keyword": "type",
+      "instancePath": ""
+    },
+    {
+      "def": "error",
+      "name": "a closed error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "closed",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "invalid_ttl is not a code of persist",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_ttl",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "closed",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

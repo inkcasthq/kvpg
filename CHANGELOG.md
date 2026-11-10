@@ -12,6 +12,8 @@ All changes to the contract and the packages are listed here. The format follows
 - The contract sections of the capabilities #15 and #18 to #22 (`docs/spec-1.0.md`, R17 to R22).
 - The RED metrics `kvpg.operation.calls` and `kvpg.operation.errors` in the telemetry contract.
 - `bench/prefix-plan.mjs`: the plans of the prefix delete on PostgreSQL 15 to 18.
+- The contract payloads in `contracts/` (JSON Schema 2020-12) with valid and invalid samples, the gate test and the drift test.
+- The contract types of version 1: `ReadResult`, `WriteOutcome`, `Limits`, `CleanupOptions`, `KV_ERROR_CODES`, `OPERATIONS`, `StoreOptions` and `PostgresStore`.
 - Telemetry conformance assertions and pending store tests, with an in-memory exporter harness and tests for both Prometheus routes.
 - The combined 1.0 specification (`docs/spec-1.0.md`), with behavior, implementation logic, acceptance tests, and open owner decisions.
 - The native telemetry specification (`docs/telemetry.md`), with open owner choices for the default and supported API/SDK versions.
@@ -25,3 +27,6 @@ All changes to the contract and the packages are listed here. The format follows
 - `deletePrefix` uses a key range with a code point upper bound.
 - `setMany` is one SQL statement, so a `pg` Client is enough for every operation.
 - The telemetry tests use the SDK 2 generation: `sdk-trace-base` 2 and the logs of `@opentelemetry/api-logs`.
+- The hook types carry safe fields only: `OperationEvent.errorCode` replaces the error object, and `onHookError` gets `{ code: 'hook' }`.
+- `expire` without `ttlMs` and `expiresAt` rejects with `invalid_ttl`.
+- `npm test` builds the package first and runs the contract tests.

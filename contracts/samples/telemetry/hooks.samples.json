@@ -1,0 +1,138 @@
+{
+  "schema": "telemetry/hooks.schema.json",
+  "cases": [
+    {
+      "def": "operationEvent",
+      "name": "a get hit",
+      "valid": true,
+      "data": {
+        "operation": "get",
+        "keys": 1,
+        "hits": 1,
+        "durationMs": 0.4
+      }
+    },
+    {
+      "def": "operationEvent",
+      "name": "a prefix delete",
+      "valid": true,
+      "data": {
+        "operation": "deletePrefix",
+        "keys": 0,
+        "durationMs": 1.2
+      }
+    },
+    {
+      "def": "operationEvent",
+      "name": "a failed set",
+      "valid": true,
+      "data": {
+        "operation": "set",
+        "keys": 1,
+        "durationMs": 2,
+        "errorCode": "driver"
+      }
+    },
+    {
+      "def": "operationEvent",
+      "name": "an error object",
+      "valid": false,
+      "data": {
+        "operation": "set",
+        "keys": 1,
+        "durationMs": 2,
+        "error": {}
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "error"
+      }
+    },
+    {
+      "def": "operationEvent",
+      "name": "a failure with hits",
+      "valid": false,
+      "data": {
+        "operation": "get",
+        "keys": 1,
+        "hits": 0,
+        "durationMs": 2,
+        "errorCode": "codec"
+      },
+      "keyword": "false schema",
+      "instancePath": "/hits"
+    },
+    {
+      "def": "operationEvent",
+      "name": "no key count",
+      "valid": false,
+      "data": {
+        "operation": "get",
+        "durationMs": 2
+      },
+      "keyword": "required",
+      "instancePath": "",
+      "params": {
+        "missingProperty": "keys"
+      }
+    },
+    {
+      "def": "operationEvent",
+      "name": "a negative duration",
+      "valid": false,
+      "data": {
+        "operation": "get",
+        "keys": 1,
+        "durationMs": -1
+      },
+      "keyword": "minimum",
+      "instancePath": "/durationMs"
+    },
+    {
+      "def": "operationEvent",
+      "name": "the hook code as an operation code",
+      "valid": false,
+      "data": {
+        "operation": "get",
+        "keys": 1,
+        "durationMs": 1,
+        "errorCode": "hook"
+      },
+      "keyword": "enum",
+      "instancePath": "/errorCode"
+    },
+    {
+      "def": "hookErrorNotice",
+      "name": "the notice",
+      "valid": true,
+      "data": {
+        "code": "hook"
+      }
+    },
+    {
+      "def": "hookErrorNotice",
+      "name": "a notice with the cause",
+      "valid": false,
+      "data": {
+        "code": "hook",
+        "cause": "synthetic"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    },
+    {
+      "def": "hookErrorNotice",
+      "name": "a notice with another code",
+      "valid": false,
+      "data": {
+        "code": "driver"
+      },
+      "keyword": "const",
+      "instancePath": "/code"
+    }
+  ]
+}

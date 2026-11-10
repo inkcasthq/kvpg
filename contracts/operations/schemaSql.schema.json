@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/operations/schemaSql.schema.json",
+  "title": "kvpg contract v1: schemaSql",
+  "description": "Spec R03 and R04. The DDL text, made without a database call.",
+  "$defs": {
+    "input": {
+      "description": "The arguments, in order.",
+      "type": "array",
+      "maxItems": 0
+    },
+    "result": {
+      "type": "string",
+      "minLength": 1
+    },
+    "error": {
+      "description": "The KvError of a failure. The cause stays with the caller and is not part of the payload (S13).",
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "KvError"
+        },
+        "code": {
+          "enum": [
+            "closed"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

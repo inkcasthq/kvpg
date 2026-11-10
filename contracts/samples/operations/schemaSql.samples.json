@@ -1,0 +1,73 @@
+{
+  "schema": "operations/schemaSql.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "no arguments",
+      "valid": true,
+      "data": []
+    },
+    {
+      "def": "input",
+      "name": "an argument",
+      "valid": false,
+      "data": [
+        "public"
+      ],
+      "keyword": "maxItems",
+      "instancePath": ""
+    },
+    {
+      "def": "result",
+      "name": "DDL text",
+      "valid": true,
+      "data": "CREATE TABLE IF NOT EXISTS public.kvpg_entries ();"
+    },
+    {
+      "def": "result",
+      "name": "empty text",
+      "valid": false,
+      "data": "",
+      "keyword": "minLength",
+      "instancePath": ""
+    },
+    {
+      "def": "error",
+      "name": "a closed error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "closed",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "driver is not a code of schemaSql",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "driver",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "closed",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

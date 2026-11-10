@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/operations/cleanupExpired.schema.json",
+  "title": "kvpg contract v1: cleanupExpired",
+  "description": "Rules S10 and S14.",
+  "$defs": {
+    "input": {
+      "description": "The arguments, in order.",
+      "type": "array",
+      "prefixItems": [
+        {
+          "$ref": "../common.schema.json#/$defs/cleanupOptions"
+        }
+      ],
+      "minItems": 0,
+      "items": false
+    },
+    "result": {
+      "$ref": "../common.schema.json#/$defs/cleanupResult"
+    },
+    "error": {
+      "description": "The KvError of a failure. The cause stays with the caller and is not part of the payload (S13).",
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "KvError"
+        },
+        "code": {
+          "enum": [
+            "invalid_batch",
+            "batch_too_large",
+            "driver",
+            "closed"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
