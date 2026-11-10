@@ -78,7 +78,7 @@ class MemoryStore {
 
   getMany(keys) {
     return this.#run('getMany', Array.isArray(keys) ? keys.length : undefined, () => {
-      const checked = this.#batch(keys).map(checkKey);
+      const checked = Array.from(this.#batch(keys), checkKey);
       if (checked.length === 0) return [];
       const entries = this.#entries();
       return checked.map((key) => {
@@ -131,7 +131,7 @@ class MemoryStore {
 
   deleteMany(keys) {
     return this.#run('deleteMany', Array.isArray(keys) ? keys.length : undefined, () => {
-      const checked = new Set(this.#batch(keys).map(checkKey));
+      const checked = new Set(Array.from(this.#batch(keys), checkKey));
       if (checked.size === 0) return 0;
       const entries = this.#entries();
       let deleted = 0;

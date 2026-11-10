@@ -399,7 +399,7 @@ class PostgresKvStore<V> implements PostgresStore<V> {
 
   #batchKeys(keys: unknown): string[] {
     this.#batchSize(keys);
-    return keys.map((key) => this.#stored(key));
+    return Array.from(keys, (key) => this.#stored(key));
   }
 
   /** The expiry of a write or of expire (S4). Any refused option gives `invalid_ttl`. */

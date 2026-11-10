@@ -189,6 +189,10 @@ export function conformance(name, makeSubject, options = {}) {
       assert.deepEqual(await store.getMany(['a', 'b', 'a', 'old']), [HIT(1), MISS, HIT(1), MISS]);
       assert.deepEqual(await noCall(subject, () => store.getMany([])), []);
       await noCall(subject, () => rejectsWith(store.getMany(['a', '']), 'invalid_key'));
+      for (const keys of [new Array(1), ['a', , 'a']]) {
+        await noCall(subject, () => rejectsWith(store.getMany(keys), 'invalid_key'));
+      }
+      assert.deepEqual(await store.getMany(['a', 'a']), [HIT(1), HIT(1)], 'a dense batch still works after refusal');
     });
     rule('S7 setMany returns written or exists for each entry and writes all entries or none', async ({ open }) => {
       const subject = await open();
@@ -223,6 +227,10 @@ export function conformance(name, makeSubject, options = {}) {
       const { store } = subject;
       await store.setMany([{ key: 'a', value: 1 }, { key: 'b', value: 1 }]);
       await store.set('old', 1, { expiresAt: PAST() });
+      for (const keys of [new Array(1), ['a', , 'b']]) {
+        await noCall(subject, () => rejectsWith(store.deleteMany(keys), 'invalid_key'));
+      }
+      assert.deepEqual(await store.getMany(['a', 'b']), [HIT(1), HIT(1)], 'a sparse batch deletes nothing');
       assert.equal(await store.deleteMany(['a', 'a', 'old', 'absent', 'b']), 2);
       assert.equal(await noCall(subject, () => store.deleteMany([])), 0);
       assert.deepEqual(await store.getMany(['a', 'b']), [MISS, MISS]);
