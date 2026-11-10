@@ -364,6 +364,33 @@ export function conformance(name, makeSubject, options = {}) {
       assert.equal(events.at(-1).errorCode, 'invalid_key');
       assert.equal(events.find((event) => event.operation === 'get').hits, 1);
     });
+    rule('S12 a codec with invalid encoded output rejects before a write and can recover', async ({ open }) => {
+      for (const column of ['bytea', 'text', 'jsonb']) {
+        const encoder = new TextEncoder();
+        let invalid;
+        const subject = await open({ codec: {
+          name: 'invalid-output', column,
+          encode(value) {
+            if (invalid !== undefined) return invalid;
+            const text = JSON.stringify(value);
+            return column === 'bytea' ? encoder.encode(text) : text;
+          },
+          decode(value) { return JSON.parse(typeof value === 'string' ? value : new TextDecoder().decode(value)); },
+        } });
+        const { store } = subject;
+        await store.set('kept', 1);
+        for (const output of [42, column === 'bytea' ? '1' : encoder.encode('1')]) {
+          invalid = output;
+          await noCall(subject, () => rejectsWith(store.set('kept', 2), 'invalid_value'));
+          await noCall(subject, () => rejectsWith(store.setMany([{ key: 'new', value: 3 }]), 'invalid_value'));
+          assert.deepEqual(await store.get('kept'), HIT(1));
+          assert.deepEqual(await store.get('new'), MISS);
+        }
+        invalid = undefined;
+        assert.deepEqual(await store.setMany([{ key: 'kept', value: 2 }, { key: 'new', value: 3 }]), ['written', 'written']);
+        assert.deepEqual(await store.getMany(['kept', 'new']), [HIT(2), HIT(3)]);
+      }
+    });
     rule('S14 limits accept a value or a batch at the limit and refuse one over it without a backend call', async ({ open }) => {
       const subject = await open({ limits: { maxValueBytes: 12, maxBatchSize: 3 } });
       const { store } = subject;

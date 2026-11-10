@@ -431,7 +431,7 @@ class PostgresKvStore<V> implements PostgresStore<V> {
     }
     const binary = this.#column === 'bytea';
     if (binary ? !(encoded instanceof Uint8Array) : typeof encoded !== 'string') {
-      fail('codec', `the codec must encode to ${binary ? 'a Uint8Array' : 'a string'} for a ${this.#column} column`);
+      fail('invalid_value', `the codec must encode to ${binary ? 'a Uint8Array' : 'a string'} for a ${this.#column} column`);
     }
     const size = typeof encoded === 'string' ? utf8Length(encoded) : encoded.byteLength;
     if (size > this.#limits.maxValueBytes) fail('value_too_large', 'the encoded value is over limits.maxValueBytes');

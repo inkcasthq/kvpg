@@ -304,10 +304,11 @@ class MemoryStore {
     } catch (error) {
       fail('invalid_value', 'the codec refused the value', error);
     }
-    let size;
-    if (stored instanceof Uint8Array) size = stored.byteLength;
-    else if (typeof stored === 'string') size = utf8(stored);
-    else fail('codec', 'the codec must encode to a Uint8Array or a string');
+    const binary = this.#codec.column === 'bytea';
+    if (binary ? !(stored instanceof Uint8Array) : typeof stored !== 'string') {
+      fail('invalid_value', 'the encoded value must match the codec column');
+    }
+    const size = typeof stored === 'string' ? utf8(stored) : stored.byteLength;
     if (size > this.#limits.maxValueBytes) fail('value_too_large', 'the encoded value is over limits.maxValueBytes');
     return stored;
   }
