@@ -1,0 +1,107 @@
+{
+  "schema": "operations/get.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "one key",
+      "valid": true,
+      "data": [
+        "user:1"
+      ]
+    },
+    {
+      "def": "input",
+      "name": "no key",
+      "valid": false,
+      "data": [],
+      "keyword": "minItems",
+      "instancePath": ""
+    },
+    {
+      "def": "input",
+      "name": "an empty key",
+      "valid": false,
+      "data": [
+        ""
+      ],
+      "keyword": "minLength",
+      "instancePath": "/0"
+    },
+    {
+      "def": "input",
+      "name": "two keys",
+      "valid": false,
+      "data": [
+        "a",
+        "b"
+      ],
+      "keyword": "items",
+      "instancePath": ""
+    },
+    {
+      "def": "result",
+      "name": "a hit",
+      "valid": true,
+      "data": {
+        "found": true,
+        "value": "v"
+      }
+    },
+    {
+      "def": "result",
+      "name": "a miss",
+      "valid": true,
+      "data": {
+        "found": false
+      }
+    },
+    {
+      "def": "result",
+      "name": "found without a value",
+      "valid": false,
+      "data": {
+        "found": true
+      },
+      "keyword": "required",
+      "instancePath": ""
+    },
+    {
+      "def": "error",
+      "name": "a driver error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "driver",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "invalid_ttl is not a code of get",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_ttl",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "driver",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

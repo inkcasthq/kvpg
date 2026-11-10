@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/operations/expire.schema.json",
+  "title": "kvpg contract v1: expire",
+  "description": "Rules S4 and S9. False when no live entry has the key.",
+  "$defs": {
+    "input": {
+      "description": "The arguments, in order.",
+      "type": "array",
+      "prefixItems": [
+        {
+          "$ref": "../common.schema.json#/$defs/key"
+        },
+        {
+          "$ref": "../common.schema.json#/$defs/expireOptions"
+        }
+      ],
+      "minItems": 2,
+      "items": false
+    },
+    "result": {
+      "type": "boolean"
+    },
+    "error": {
+      "description": "The KvError of a failure. The cause stays with the caller and is not part of the payload (S13).",
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "KvError"
+        },
+        "code": {
+          "enum": [
+            "invalid_key",
+            "invalid_ttl",
+            "driver",
+            "closed"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

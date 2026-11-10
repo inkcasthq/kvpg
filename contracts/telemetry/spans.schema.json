@@ -1,0 +1,589 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/telemetry/spans.schema.json",
+  "title": "kvpg telemetry: one operation span",
+  "description": "A finished, recording kvpg span in normal form: name, kind, status code name and attributes (T04, T07, T08).",
+  "type": "object",
+  "required": [
+    "name",
+    "kind",
+    "status",
+    "attributes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "enum": [
+        "kvpg.get",
+        "kvpg.getMany",
+        "kvpg.set",
+        "kvpg.setMany",
+        "kvpg.delete",
+        "kvpg.deleteMany",
+        "kvpg.deletePrefix",
+        "kvpg.has",
+        "kvpg.ttl",
+        "kvpg.expire",
+        "kvpg.persist",
+        "kvpg.cleanupExpired",
+        "kvpg.close",
+        "kvpg.schemaSql",
+        "kvpg.migrate"
+      ]
+    },
+    "kind": {
+      "const": "INTERNAL"
+    },
+    "status": {
+      "enum": [
+        "UNSET",
+        "ERROR"
+      ]
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kvpg.operation",
+        "kvpg.store",
+        "kvpg.trigger",
+        "kvpg.outcome"
+      ],
+      "properties": {
+        "kvpg.operation": {
+          "$ref": "../common.schema.json#/$defs/operation"
+        },
+        "kvpg.store": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A fixed implementation identifier, such as postgresql (T07)."
+        },
+        "kvpg.trigger": {
+          "enum": [
+            "foreground",
+            "interval"
+          ]
+        },
+        "kvpg.outcome": {
+          "enum": [
+            "success",
+            "error"
+          ]
+        },
+        "error.type": {
+          "$ref": "../common.schema.json#/$defs/errorCode"
+        },
+        "kvpg.keys": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "kvpg.hits": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "kvpg.misses": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "kvpg.rows_deleted": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "kvpg.batches": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kvpg.outcome": {
+                "const": "error"
+              }
+            },
+            "required": [
+              "kvpg.outcome"
+            ]
+          },
+          "then": {
+            "required": [
+              "error.type"
+            ],
+            "properties": {
+              "kvpg.hits": false,
+              "kvpg.misses": false
+            }
+          },
+          "else": {
+            "properties": {
+              "error.type": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kvpg.operation": {
+                "enum": [
+                  "get",
+                  "getMany",
+                  "has",
+                  "ttl"
+                ]
+              }
+            },
+            "required": [
+              "kvpg.operation"
+            ]
+          },
+          "then": {},
+          "else": {
+            "properties": {
+              "kvpg.hits": false,
+              "kvpg.misses": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kvpg.operation": {
+                "enum": [
+                  "deletePrefix",
+                  "cleanupExpired",
+                  "close",
+                  "schemaSql",
+                  "migrate"
+                ]
+              }
+            },
+            "required": [
+              "kvpg.operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "kvpg.keys": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kvpg.operation": {
+                "const": "cleanupExpired"
+              }
+            },
+            "required": [
+              "kvpg.operation"
+            ]
+          },
+          "then": {},
+          "else": {
+            "properties": {
+              "kvpg.rows_deleted": false,
+              "kvpg.batches": false,
+              "kvpg.trigger": {
+                "const": "foreground"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ERROR"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.outcome": {
+                "const": "error"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.outcome": {
+                "const": "success"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.get"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "get"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.getMany"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "getMany"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.set"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "set"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.setMany"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "setMany"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.delete"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "delete"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.deleteMany"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "deleteMany"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.deletePrefix"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "deletePrefix"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.has"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "has"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.ttl"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "ttl"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.expire"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "expire"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.persist"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "persist"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.cleanupExpired"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "cleanupExpired"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.close"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "close"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.schemaSql"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "schemaSql"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.migrate"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.operation": {
+                "const": "migrate"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

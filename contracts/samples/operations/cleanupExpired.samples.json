@@ -1,0 +1,115 @@
+{
+  "schema": "operations/cleanupExpired.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "no options",
+      "valid": true,
+      "data": []
+    },
+    {
+      "def": "input",
+      "name": "empty options",
+      "valid": true,
+      "data": [
+        {}
+      ]
+    },
+    {
+      "def": "input",
+      "name": "both options",
+      "valid": true,
+      "data": [
+        {
+          "batchSize": 5000,
+          "maxBatches": 3
+        }
+      ]
+    },
+    {
+      "def": "input",
+      "name": "a zero batchSize",
+      "valid": false,
+      "data": [
+        {
+          "batchSize": 0
+        }
+      ],
+      "keyword": "minimum",
+      "instancePath": "/0/batchSize"
+    },
+    {
+      "def": "input",
+      "name": "two arguments",
+      "valid": false,
+      "data": [
+        {},
+        {}
+      ],
+      "keyword": "items",
+      "instancePath": ""
+    },
+    {
+      "def": "result",
+      "name": "two batches",
+      "valid": true,
+      "data": {
+        "deleted": 10,
+        "batches": 2
+      }
+    },
+    {
+      "def": "result",
+      "name": "an extra count",
+      "valid": false,
+      "data": {
+        "deleted": 1,
+        "batches": 1,
+        "scanned": 9
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "scanned"
+      }
+    },
+    {
+      "def": "error",
+      "name": "a invalid_batch error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_batch",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "invalid_key is not a code of cleanupExpired",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_key",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_batch",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

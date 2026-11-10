@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/operations/setMany.schema.json",
+  "title": "kvpg contract v1: setMany",
+  "description": "Rule S7 and owner decision #11. One outcome for each entry, in input order. A key twice in one batch: invalid_batch.",
+  "$defs": {
+    "input": {
+      "description": "The arguments, in order.",
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/entry"
+          }
+        }
+      ],
+      "minItems": 1,
+      "items": false
+    },
+    "result": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/writeOutcome"
+      }
+    },
+    "error": {
+      "description": "The KvError of a failure. The cause stays with the caller and is not part of the payload (S13).",
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "KvError"
+        },
+        "code": {
+          "enum": [
+            "invalid_key",
+            "invalid_ttl",
+            "invalid_value",
+            "invalid_batch",
+            "value_too_large",
+            "batch_too_large",
+            "driver",
+            "closed"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,345 @@
+{
+  "schema": "telemetry/spans.schema.json",
+  "cases": [
+    {
+      "name": "a get hit",
+      "valid": true,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.keys": 1,
+          "kvpg.hits": 1,
+          "kvpg.misses": 0
+        }
+      }
+    },
+    {
+      "name": "a failed getMany",
+      "valid": true,
+      "data": {
+        "name": "kvpg.getMany",
+        "kind": "INTERNAL",
+        "status": "ERROR",
+        "attributes": {
+          "kvpg.operation": "getMany",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "error.type": "driver",
+          "kvpg.keys": 3
+        }
+      }
+    },
+    {
+      "name": "an interval cleanup",
+      "valid": true,
+      "data": {
+        "name": "kvpg.cleanupExpired",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "cleanupExpired",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "interval",
+          "kvpg.outcome": "success",
+          "kvpg.rows_deleted": 10,
+          "kvpg.batches": 2
+        }
+      }
+    },
+    {
+      "name": "a prefix delete",
+      "valid": true,
+      "data": {
+        "name": "kvpg.deletePrefix",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "deletePrefix",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        }
+      }
+    },
+    {
+      "name": "a second close",
+      "valid": true,
+      "data": {
+        "name": "kvpg.close",
+        "kind": "INTERNAL",
+        "status": "ERROR",
+        "attributes": {
+          "kvpg.operation": "close",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "error.type": "closed"
+        }
+      }
+    },
+    {
+      "name": "the span name and the operation differ",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "set",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/attributes/kvpg.operation"
+    },
+    {
+      "name": "status ERROR with outcome success",
+      "valid": false,
+      "data": {
+        "name": "kvpg.set",
+        "kind": "INTERNAL",
+        "status": "ERROR",
+        "attributes": {
+          "kvpg.operation": "set",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/attributes/kvpg.outcome"
+    },
+    {
+      "name": "a failure without error.type",
+      "valid": false,
+      "data": {
+        "name": "kvpg.set",
+        "kind": "INTERNAL",
+        "status": "ERROR",
+        "attributes": {
+          "kvpg.operation": "set",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error"
+        }
+      },
+      "keyword": "required",
+      "instancePath": "/attributes",
+      "params": {
+        "missingProperty": "error.type"
+      }
+    },
+    {
+      "name": "a success with error.type",
+      "valid": false,
+      "data": {
+        "name": "kvpg.set",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "set",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "error.type": "driver"
+        }
+      },
+      "keyword": "false schema",
+      "instancePath": "/attributes/error.type"
+    },
+    {
+      "name": "a failed read with hits",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "ERROR",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "error.type": "codec",
+          "kvpg.hits": 1
+        }
+      },
+      "keyword": "false schema",
+      "instancePath": "/attributes/kvpg.hits"
+    },
+    {
+      "name": "a write with hits",
+      "valid": false,
+      "data": {
+        "name": "kvpg.set",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "set",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.hits": 1
+        }
+      },
+      "keyword": "false schema",
+      "instancePath": "/attributes/kvpg.hits"
+    },
+    {
+      "name": "a prefix delete with a key count",
+      "valid": false,
+      "data": {
+        "name": "kvpg.deletePrefix",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "deletePrefix",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.keys": 1
+        }
+      },
+      "keyword": "false schema",
+      "instancePath": "/attributes/kvpg.keys"
+    },
+    {
+      "name": "an interval get",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "interval",
+          "kvpg.outcome": "success"
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/attributes/kvpg.trigger"
+    },
+    {
+      "name": "a get with a cleanup count",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.rows_deleted": 1
+        }
+      },
+      "keyword": "false schema",
+      "instancePath": "/attributes/kvpg.rows_deleted"
+    },
+    {
+      "name": "a key in an attribute",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.key": "user:1"
+        }
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "/attributes",
+      "params": {
+        "additionalProperty": "kvpg.key"
+      }
+    },
+    {
+      "name": "a CLIENT span",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "CLIENT",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/kind"
+    },
+    {
+      "name": "an unknown error code",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "ERROR",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "error.type": "timeout"
+        }
+      },
+      "keyword": "enum",
+      "instancePath": "/attributes/error.type"
+    },
+    {
+      "name": "a negative count",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.keys": -1
+        }
+      },
+      "keyword": "minimum",
+      "instancePath": "/attributes/kvpg.keys"
+    },
+    {
+      "name": "an exception event field",
+      "valid": false,
+      "data": {
+        "name": "kvpg.get",
+        "kind": "INTERNAL",
+        "status": "UNSET",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success"
+        },
+        "events": []
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "events"
+      }
+    }
+  ]
+}

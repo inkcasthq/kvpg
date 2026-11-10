@@ -1,0 +1,249 @@
+{
+  "schema": "telemetry/logs.schema.json",
+  "cases": [
+    {
+      "name": "a failed get",
+      "valid": true,
+      "data": {
+        "eventName": "kvpg.operation.failed",
+        "severityNumber": 17,
+        "body": "kvpg operation failed",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "kvpg.duration": 0.004,
+          "error.type": "driver",
+          "kvpg.keys": 1
+        }
+      }
+    },
+    {
+      "name": "a slow set",
+      "valid": true,
+      "data": {
+        "eventName": "kvpg.operation.slow",
+        "severityNumber": 13,
+        "body": "kvpg operation slow",
+        "attributes": {
+          "kvpg.operation": "set",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.duration": 0.004,
+          "kvpg.keys": 1
+        }
+      }
+    },
+    {
+      "name": "a recovered cleanup",
+      "valid": true,
+      "data": {
+        "eventName": "kvpg.cleanup.recovered",
+        "severityNumber": 9,
+        "body": "kvpg cleanup recovered",
+        "attributes": {
+          "kvpg.operation": "cleanupExpired",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "interval",
+          "kvpg.outcome": "success",
+          "kvpg.duration": 0.004,
+          "kvpg.rows_deleted": 4,
+          "kvpg.batches": 1
+        }
+      }
+    },
+    {
+      "name": "a failed hook",
+      "valid": true,
+      "data": {
+        "eventName": "kvpg.hook.failed",
+        "severityNumber": 17,
+        "body": "kvpg hook failed",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "kvpg.duration": 0.004,
+          "error.type": "hook"
+        }
+      }
+    },
+    {
+      "name": "a failure at severity 13",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.operation.failed",
+        "severityNumber": 13,
+        "body": "kvpg operation failed",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "kvpg.duration": 0.004,
+          "error.type": "driver"
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/severityNumber"
+    },
+    {
+      "name": "a body with a key",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.operation.failed",
+        "severityNumber": 17,
+        "body": "kvpg operation failed: user:1",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "kvpg.duration": 0.004,
+          "error.type": "driver"
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/body"
+    },
+    {
+      "name": "an operation failure with the hook code",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.operation.failed",
+        "severityNumber": 17,
+        "body": "kvpg operation failed",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "kvpg.duration": 0.004,
+          "error.type": "hook"
+        }
+      },
+      "keyword": "enum",
+      "instancePath": "/attributes/error.type"
+    },
+    {
+      "name": "a slow failure",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.operation.slow",
+        "severityNumber": 13,
+        "body": "kvpg operation slow",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "kvpg.duration": 0.004
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/attributes/kvpg.outcome"
+    },
+    {
+      "name": "a foreground recovery",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.cleanup.recovered",
+        "severityNumber": 9,
+        "body": "kvpg cleanup recovered",
+        "attributes": {
+          "kvpg.operation": "cleanupExpired",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.duration": 0.004
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/attributes/kvpg.trigger"
+    },
+    {
+      "name": "a hook failure with a driver code",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.hook.failed",
+        "severityNumber": 17,
+        "body": "kvpg hook failed",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "kvpg.duration": 0.004,
+          "error.type": "driver"
+        }
+      },
+      "keyword": "const",
+      "instancePath": "/attributes/error.type"
+    },
+    {
+      "name": "a record without a duration",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.operation.failed",
+        "severityNumber": 17,
+        "body": "kvpg operation failed",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "error.type": "driver"
+        }
+      },
+      "keyword": "required",
+      "instancePath": "/attributes",
+      "params": {
+        "missingProperty": "kvpg.duration"
+      }
+    },
+    {
+      "name": "an exception message",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.operation.failed",
+        "severityNumber": 17,
+        "body": "kvpg operation failed",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "error",
+          "kvpg.duration": 0.004,
+          "error.type": "driver",
+          "exception.message": "synthetic"
+        }
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "/attributes",
+      "params": {
+        "additionalProperty": "exception.message"
+      }
+    },
+    {
+      "name": "a success record",
+      "valid": false,
+      "data": {
+        "eventName": "kvpg.operation.succeeded",
+        "severityNumber": 9,
+        "body": "kvpg operation succeeded",
+        "attributes": {
+          "kvpg.operation": "get",
+          "kvpg.store": "postgresql",
+          "kvpg.trigger": "foreground",
+          "kvpg.outcome": "success",
+          "kvpg.duration": 0.004
+        }
+      },
+      "keyword": "enum",
+      "instancePath": "/eventName"
+    }
+  ]
+}

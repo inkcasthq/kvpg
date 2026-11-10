@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/operations/deleteMany.schema.json",
+  "title": "kvpg contract v1: deleteMany",
+  "description": "Rule S7. The count of live entries deleted. A repeated key counts once. A batch that is not an array: invalid_batch.",
+  "$defs": {
+    "input": {
+      "description": "The arguments, in order.",
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "../common.schema.json#/$defs/key"
+          }
+        }
+      ],
+      "minItems": 1,
+      "items": false
+    },
+    "result": {
+      "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+    },
+    "error": {
+      "description": "The KvError of a failure. The cause stays with the caller and is not part of the payload (S13).",
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "KvError"
+        },
+        "code": {
+          "enum": [
+            "invalid_key",
+            "invalid_batch",
+            "batch_too_large",
+            "driver",
+            "closed"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -11,34 +11,33 @@ An exporter sends recorded signals to a destination.
 These keywords use the meanings of RFC 2119.
 Each numbered rule cites its authority.
 
-Detailed policies under issue #6 are choices of this draft, unless the text marks an open owner choice.
+Detailed policies under issue #6 are choices of this contract. `docs/decisions.md` records each owner decision and refinement.
 The tests for this contract belong to issue #3.
-This draft does not claim that the store or its telemetry exists.
+The PostgreSQL store of #2 implements this contract. `test/telemetry/` holds its acceptance tests.
 
 ## T01. Dependencies and ownership
 
 Every store and adapter MUST implement this contract as native behavior [O6].
-The main package MUST depend on `@opentelemetry/api` only for OpenTelemetry interfaces [O6].
-Its runtime dependencies MUST exclude SDKs, exporters, samplers, instrumentation packages, and a separate logs API package [O6].
+The main package MUST depend on the OpenTelemetry API only, as a peer dependency `@opentelemetry/api` `^1.9.0` [O6], [O14].
+For logs under T10, it declares `@opentelemetry/api-logs` as an optional peer dependency [O14].
+Its runtime dependencies MUST exclude SDKs, exporters, samplers and instrumentation packages [O6].
+`docs/decisions.md` (RF14) gives the reason for the peer form.
 
 The application owns providers, resources, processors, exporters, sampling, propagation, and shutdown.
 kvpg MUST NOT install global providers, change application propagation, start an exporter, or open a metrics server [O6].
 kvpg MUST NOT detect installed SDK packages to choose whether telemetry is enabled [M].
+The provider rule of T03 asks the OpenTelemetry API, not the installed packages.
 
 The conformance development environment can use SDKs and in-memory exporters.
 
-## T02. Versions remain an owner choice
+## T02. Supported versions
 
-OPEN OWNER CHOICE #14: the supported API and SDK ranges are undecided [O14].
-Option A qualifies API `>=1.10.0 <1.11.0` with stable SDK packages `>=3.0.0 <4.0.0`.
-Option B qualifies API 1.9 and SDK 2 with a separate application logger bridge.
+The owner decision of #14 selects OpenTelemetry API 1.9 and later with SDK 2 [O14].
+`@opentelemetry/sdk-metrics` 2.12.1 accepts API `>=1.9.0 <1.10.0`, the narrowest peer range of the SDK 2 packages. Thus the qualified pairs use API 1.9 [SDK2].
+If `@opentelemetry/api-logs` is present, logs go through it [O14].
+If it is absent, logs are off and traces and metrics still work.
 
-Option B needs a revised logs design because the main package cannot depend on a separate logs API.
-Recommendation: select Option A, then qualify exact minimum and current pairs before widening either range.
-API 1.10 includes the logs interface [JS3].
-
-No API/SDK pair is qualified by this document.
-
+The first qualified pair is API 1.9.1 with SDK 2.12.1 and `@opentelemetry/api-logs` 0.223.1.
 Each release MUST name its tested ranges and exact test pairs [O14].
 The suite MUST exercise each supported pair without providers, with providers first, and with providers registered after store creation [O14].
 Late registration applies to subsequent operations. Earlier signals do not replay.
@@ -66,7 +65,7 @@ An absent, empty, or unrecognized value means unset.
 The environment is read once at store creation.
 No warning includes its raw value.
 
-The resolved master switch uses the first defined value: instance `enabled`, the environment switch, then the selected release default.
+The resolved master switch uses the first defined value: instance `enabled`, the environment switch, then true.
 A boolean `telemetry` supplies instance `enabled`.
 An omitted signal switch means true.
 
@@ -78,15 +77,24 @@ With a signal disabled, kvpg MUST make no recording calls for that signal [O6].
 With all signals disabled, kvpg MUST skip telemetry clocks, attribute construction, and API calls for the operation [O6].
 Application hooks remain independent of these switches.
 
-OPEN OWNER CHOICE #6: the release default is undecided.
-Option A enables all three signals by default. A compatible application pipeline receives native telemetry without store configuration.
-Option B disables all three signals by default. The application enables telemetry through the environment or the store configuration.
+The owner decision of #6 sets the default [O6].
+If the application registered a provider for a signal, that signal is on.
+With no provider for a signal, the store MUST do no work for that signal.
+Each store has an off switch: `telemetry: false` or `enabled: false`.
+The environment switch can also turn all stores off.
 
-Recommendation: select Option A to match the native telemetry goal.
-Option B matches the default recommended by the MongoDB tracing specification [M].
-Neither option proves a cost claim.
+For each operation, the store MUST ask the OpenTelemetry API for the providers, so that a late provider takes effect [O14]:
 
-The suite accepts an explicit default declaration until the owner selects the release default.
+| Signal | No provider registered |
+|---|---|
+| Traces | The global tracer provider is a `ProxyTracerProvider`, and `getDelegateTracer` returns `undefined` |
+| Metrics | The global meter provider returns the no-op meter of `createNoopMeter()` |
+| Logs | The `@opentelemetry/api-logs` logger reports `enabled()` as false, or the package is absent |
+
+Without a provider for any signal and without a hook, the operation MUST do no telemetry work [O6].
+It then reads no clock, builds no attribute object, and calls no recording method.
+A hook needs its elapsed time, so a hook alone permits one clock read.
+The suite tests the three states of #6: a provider registered, no provider, and the instance off switch.
 
 ## T04. Scope and operation names
 
@@ -190,7 +198,7 @@ The metric rules narrow this list further.
 | Hook `errorCode` | A contract error code | Failed operation hook |
 | Hook-error `code` | `hook` | `onHookError` argument |
 
-Contract error codes are `invalid_key`, `invalid_ttl`, `invalid_value`, `codec`, `driver`, and `closed`.
+Contract error codes are the codes of S12: `invalid_key`, `invalid_ttl`, `invalid_value`, `invalid_batch`, `value_too_large`, `batch_too_large`, `codec`, `driver`, `schema`, and `closed`.
 The implementation identifier is a library constant, never a caller-supplied instance name.
 Scope version, timestamps, trace IDs, span IDs, flags, severity, fixed bodies, event names, and fixed span names are structural fields.
 The application owns resource attributes and baggage.
@@ -206,7 +214,7 @@ kvpg MUST keep the original S12 `KvError.cause` for the caller [S12], [O13].
 
 Caller error fidelity does not permit telemetry disclosure.
 
-The current `OperationEvent.error` and `onHookError(error)` types need safe replacements before implementation.
+The hook types carry only safe fields (`packages/kvpg/src/extension.ts`).
 An operation hook receives `errorCode` instead of an error object.
 `onHookError` receives only `{ code: 'hook' }`.
 The store MUST isolate a throwing hook and preserve the original operation result [E51], [O13].
@@ -243,19 +251,25 @@ An API recording failure MUST NOT become a cache failure or produce recursive di
 ## T09. Metrics
 
 kvpg metrics describe public cache operations, rather than database attempts.
-These four names are custom kvpg metrics, not database semantic conventions.
+These six names are custom kvpg metrics, not database semantic conventions.
+Together they give the RED metrics of each operation: rate, errors and duration [O9].
 The store MUST use the following instruments and units with metrics enabled [O6].
 
 | Name | Instrument | Unit | Record rule |
 |---|---|---|---|
 | `kvpg.operation.duration` | Histogram | `s` | Once per completed public operation, including errors and empty batches |
+| `kvpg.operation.calls` | Counter | `{call}` | One per completed public operation, including errors and empty batches |
+| `kvpg.operation.errors` | Counter | `{error}` | One per failed public operation |
 | `kvpg.cache.hits` | Counter | `{key}` | Successful `get`, `getMany`, `has`, and `ttl` live results |
 | `kvpg.cache.misses` | Counter | `{key}` | Successful `get`, `getMany`, `has`, and `ttl` missing results |
 | `kvpg.cleanup.rows_deleted` | Counter | `{row}` | Confirmed expired rows removed by `cleanupExpired` |
 
 Every duration point has exactly `kvpg.operation`, `kvpg.store`, `kvpg.trigger`, and `kvpg.outcome`.
 An error duration point also has `error.type`.
-Each counter point has exactly `kvpg.operation`, `kvpg.store`, and `kvpg.trigger`.
+Every call point has exactly `kvpg.operation`, `kvpg.store`, `kvpg.trigger`, and `kvpg.outcome`.
+Every error point has exactly `kvpg.operation`, `kvpg.store`, `kvpg.trigger`, and `error.type`.
+Each other counter point has exactly `kvpg.operation`, `kvpg.store`, and `kvpg.trigger`.
+The duration histogram MUST give the bucket advice `[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]` seconds [DBM].
 
 The store MUST omit all other metric attributes, including numeric counts, IDs, and names supplied by callers [O13], [O6].
 It MUST record durations in seconds and counter increments as nonnegative integers [O6].
@@ -267,6 +281,9 @@ A persistent `ttl` result counts as a hit.
 
 Failed reads contribute no hit or miss increments.
 Writes, deletes, `expire`, and `persist` contribute neither hits nor misses.
+
+The call count of an operation equals its histogram count for each attribute set without `error.type`.
+The error count of each code equals the histogram count of the error points with that code.
 
 Cleanup increments the removed-row counter after each confirmed batch.
 A later failed batch does not erase the confirmed increments.
@@ -380,14 +397,14 @@ The acceptance matrix is:
 | Test group | Positive case | Negative or recovery case |
 |---|---|---|
 | T01 | API-only runtime dependency tree | SDK import or provider mutation fails acceptance |
-| T02 | SDK first and SDK late, per signal | No providers, supported pair boundaries, instance off |
-| T03 | Every switch and precedence combination | Invalid environment value, two stores with different switches |
+| T02 | SDK first and SDK late, per signal | No providers, supported pair boundaries, instance off, absent logs package |
+| T03 | Provider registered, no provider, instance off | Invalid environment value, two stores with different switches, no clock read without a provider |
 | T04 | Every public name and one INTERNAL span | Empty batches, input refusal, closed store, internal delegation |
 | T05 | Parent-child context under concurrent calls | Failed queries, driver retries, caller context restoration |
 | T06 | Manual and interval cleanup parents | Concurrent stores, interval overlap, close, database-only scheduling |
 | T07 | Every allowed field and caller cause | Key, value, prefix, namespace, codec, driver, and hook markers |
 | T08 | Recording span and valid dropped span | Invalid context, throwing API, trace-independent metrics and logs |
-| T09 | Exact names, units, attributes, and count totals | Duplicate reads, expired misses, failed reads, partial cleanup |
+| T09 | Exact names, units, attributes, count totals, and RED counters equal to histogram counts | Duplicate reads, expired misses, failed reads, partial cleanup |
 | T10 | Failure, slow success, and recovery records | No duplicate records, failed hooks, repeated cleanup failures |
 | T11 | Scrape and OTLP integration | No kvpg server, no duplicate database duration metric |
 | T12 | All four benchmark setups | Missing setup or raw output blocks a cost claim |
@@ -404,9 +421,11 @@ Local line references describe baseline `ba7f1c1`.
 
 [O2]: https://github.com/inkcasthq/kvpg/issues/2 "Store implementation and acceptance, read 2026-11-08"
 [O3]: https://github.com/inkcasthq/kvpg/issues/3 "Portable conformance suite, read 2026-11-08"
-[O6]: https://github.com/inkcasthq/kvpg/issues/6 "Owner telemetry decisions, including 2026-11-08 23:00 UTC, read 2026-11-08"
+[O6]: https://github.com/inkcasthq/kvpg/issues/6 "Owner telemetry decisions of 2026-11-08 and the default of 2026-11-10 03:20 UTC"
 [O13]: https://github.com/inkcasthq/kvpg/issues/13 "Signal and hook privacy, read 2026-11-08"
-[O14]: https://github.com/inkcasthq/kvpg/issues/14 "Open API/SDK qualification, read 2026-11-08"
+[O14]: https://github.com/inkcasthq/kvpg/issues/14#issuecomment-6758118829 "Owner decision: API 1.9 and later with SDK 2, logs through the logs package, 2026-11-10 03:20 UTC"
+[O9]: decisions.md#od9-first-build-batch-and-red-metrics-owner-2026-11-10-0332-0334-utc "RED metrics from day 1, owner, 2026-11-10"
+[SDK2]: https://www.npmjs.com/package/@opentelemetry/sdk-metrics/v/2.12.1 "peerDependencies @opentelemetry/api >=1.9.0 <1.10.0, read 2026-11-10"
 [S11]: standard.md#rules "docs/standard.md:45, baseline ba7f1c1"
 [S12]: standard.md#rules "docs/standard.md:47, baseline ba7f1c1"
 [E51]: extending.md#3-hooks "docs/extending.md:51, baseline ba7f1c1"

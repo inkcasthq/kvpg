@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/common.schema.json",
+  "title": "kvpg contract v1: shared definitions",
+  "description": "The payloads that several operations share. docs/standard.md states the rules S1 to S14.",
+  "$defs": {
+    "positiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "nonnegativeSafeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "key": {
+      "description": "A key: 1 to 1,024 UTF-8 bytes, well formed, without NUL. Rule S3. A prefix follows the same rules (S8).",
+      "type": "string",
+      "minLength": 1,
+      "x-kvpg-utf8": {
+        "maxBytes": 1024,
+        "wellFormed": true,
+        "noNul": true
+      }
+    },
+    "value": {
+      "description": "A value of the codec domain. For the default json codec this is any JSON value (RF18)."
+    },
+    "none": {
+      "description": "The operation resolves with no value. TypeScript: void.",
+      "type": "null"
+    },
+    "expiresAt": {
+      "description": "An absolute expiry. In a payload it is an RFC 3339 date-time. TypeScript: Date. Rule S4.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiryOptions": {
+      "description": "Give ttlMs or expiresAt, not both. Rule S4.",
+      "type": "object",
+      "properties": {
+        "ttlMs": {
+          "$ref": "#/$defs/positiveSafeInteger",
+          "description": "Time to live in milliseconds. Rule S4."
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/expiresAt"
+        }
+      },
+      "dependentSchemas": {
+        "ttlMs": {
+          "type": "object",
+          "properties": {
+            "expiresAt": false
+          }
+        }
+      }
+    },
+    "expireOptions": {
+      "description": "The options of expire: exactly one of ttlMs and expiresAt (RF22).",
+      "type": "object",
+      "$ref": "#/$defs/expiryOptions",
+      "if": {
+        "required": [
+          "ttlMs"
+        ]
+      },
+      "else": {
+        "required": [
+          "expiresAt"
+        ]
+      }
+    },
+    "setOptions": {
+      "description": "The options of one write. Rules S4 and S6.",
+      "type": "object",
+      "properties": {
+        "ttlMs": {
+          "$ref": "#/$defs/positiveSafeInteger",
+          "description": "Time to live in milliseconds. Rule S4."
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/expiresAt"
+        },
+        "ifAbsent": {
+          "type": "boolean",
+          "description": "Write only when no live entry has the key. Rule S6."
+        }
+      },
+      "dependentSchemas": {
+        "ttlMs": {
+          "type": "object",
+          "properties": {
+            "expiresAt": false
+          }
+        }
+      }
+    },
+    "entry": {
+      "description": "One entry of setMany.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "value": {
+          "$ref": "#/$defs/value"
+        },
+        "options": {
+          "$ref": "#/$defs/setOptions"
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ]
+    },
+    "readResult": {
+      "description": "The tagged read result. Rule S1, owner decision #12.",
+      "type": "object",
+      "properties": {
+        "found": {
+          "type": "boolean"
+        },
+        "value": {
+          "$ref": "#/$defs/value"
+        }
+      },
+      "required": [
+        "found"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "found": {
+                "const": true
+              }
+            },
+            "required": [
+              "found"
+            ]
+          },
+          "then": {
+            "required": [
+              "value"
+            ]
+          },
+          "else": {
+            "properties": {
+              "value": false
+            }
+          }
+        }
+      ]
+    },
+    "writeOutcome": {
+      "description": "The outcome of one setMany entry. Rule S7, owner decision #11.",
+      "enum": [
+        "written",
+        "exists"
+      ]
+    },
+    "timeToLive": {
+      "description": "The time left on an entry. Rule S9.",
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "missing",
+            "persistent",
+            "expiring"
+          ]
+        },
+        "ms": {
+          "$ref": "#/$defs/nonnegativeSafeInteger"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "expiring"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "required": [
+              "ms"
+            ]
+          },
+          "else": {
+            "properties": {
+              "ms": false
+            }
+          }
+        }
+      ]
+    },
+    "cleanupOptions": {
+      "description": "The options of one cleanup run. Rules S10 and S14.",
+      "type": "object",
+      "properties": {
+        "batchSize": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "maxBatches": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        }
+      }
+    },
+    "cleanupResult": {
+      "description": "The confirmed progress of one cleanup run. Rule S10.",
+      "type": "object",
+      "properties": {
+        "deleted": {
+          "$ref": "#/$defs/nonnegativeSafeInteger"
+        },
+        "batches": {
+          "$ref": "#/$defs/nonnegativeSafeInteger"
+        }
+      },
+      "required": [
+        "deleted",
+        "batches"
+      ],
+      "additionalProperties": false
+    },
+    "limits": {
+      "description": "The finite limits of one store. Rule S14, owner decision #16.",
+      "type": "object",
+      "properties": {
+        "maxValueBytes": {
+          "$ref": "#/$defs/positiveSafeInteger",
+          "default": 1048576
+        },
+        "maxBatchSize": {
+          "$ref": "#/$defs/positiveSafeInteger",
+          "default": 5000
+        }
+      }
+    },
+    "errorCode": {
+      "description": "The error codes of rule S12.",
+      "enum": [
+        "invalid_key",
+        "invalid_ttl",
+        "invalid_value",
+        "invalid_batch",
+        "value_too_large",
+        "batch_too_large",
+        "codec",
+        "driver",
+        "schema",
+        "closed"
+      ]
+    },
+    "operation": {
+      "description": "The public operations (T04).",
+      "enum": [
+        "get",
+        "getMany",
+        "set",
+        "setMany",
+        "delete",
+        "deleteMany",
+        "deletePrefix",
+        "has",
+        "ttl",
+        "expire",
+        "persist",
+        "cleanupExpired",
+        "close",
+        "schemaSql",
+        "migrate"
+      ]
+    }
+  }
+}

@@ -1,0 +1,721 @@
+{
+  "schema": "common.schema.json",
+  "cases": [
+    {
+      "def": "key",
+      "name": "a short key",
+      "valid": true,
+      "data": "user:42"
+    },
+    {
+      "def": "key",
+      "name": "a key of exactly 1,024 bytes",
+      "valid": true,
+      "data": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "def": "key",
+      "name": "a key of 512 two-byte characters",
+      "valid": true,
+      "data": "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9"
+    },
+    {
+      "def": "key",
+      "name": "a key with SQL text is ordinary data",
+      "valid": true,
+      "data": "'); DROP TABLE x; --"
+    },
+    {
+      "def": "key",
+      "name": "the empty key",
+      "valid": false,
+      "data": "",
+      "keyword": "minLength",
+      "instancePath": ""
+    },
+    {
+      "def": "key",
+      "name": "a key of 1,025 bytes",
+      "valid": false,
+      "data": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyword": "x-kvpg-utf8",
+      "instancePath": "",
+      "params": {
+        "rule": "maxBytes"
+      }
+    },
+    {
+      "def": "key",
+      "name": "a key with NUL",
+      "valid": false,
+      "data": "a\u0000b",
+      "keyword": "x-kvpg-utf8",
+      "instancePath": "",
+      "params": {
+        "rule": "noNul"
+      }
+    },
+    {
+      "def": "key",
+      "name": "a key with a lone surrogate",
+      "valid": false,
+      "data": "a\ud800",
+      "keyword": "x-kvpg-utf8",
+      "instancePath": "",
+      "params": {
+        "rule": "wellFormed"
+      }
+    },
+    {
+      "def": "key",
+      "name": "a number is not a key",
+      "valid": false,
+      "data": 42,
+      "keyword": "type",
+      "instancePath": ""
+    },
+    {
+      "def": "value",
+      "name": "null is a json value",
+      "valid": true,
+      "data": null
+    },
+    {
+      "def": "value",
+      "name": "an object is a json value",
+      "valid": true,
+      "data": {
+        "a": [
+          1,
+          "b",
+          true
+        ]
+      }
+    },
+    {
+      "def": "none",
+      "name": "null is no value",
+      "valid": true,
+      "data": null
+    },
+    {
+      "def": "none",
+      "name": "true is a value",
+      "valid": false,
+      "data": true,
+      "keyword": "type",
+      "instancePath": ""
+    },
+    {
+      "def": "expiresAt",
+      "name": "an RFC 3339 instant",
+      "valid": true,
+      "data": "2026-11-10T03:20:00Z"
+    },
+    {
+      "def": "expiresAt",
+      "name": "an instant with an offset and fraction",
+      "valid": true,
+      "data": "2026-11-10T05:20:00.125+02:00"
+    },
+    {
+      "def": "expiresAt",
+      "name": "a month 13",
+      "valid": false,
+      "data": "2026-13-10T03:20:00Z",
+      "keyword": "format",
+      "instancePath": ""
+    },
+    {
+      "def": "expiresAt",
+      "name": "a free-text date",
+      "valid": false,
+      "data": "tomorrow",
+      "keyword": "format",
+      "instancePath": ""
+    },
+    {
+      "def": "expiryOptions",
+      "name": "no expiry options",
+      "valid": true,
+      "data": {}
+    },
+    {
+      "def": "expiryOptions",
+      "name": "ttlMs only",
+      "valid": true,
+      "data": {
+        "ttlMs": 1000
+      }
+    },
+    {
+      "def": "expiryOptions",
+      "name": "both ttlMs and expiresAt",
+      "valid": false,
+      "data": {
+        "ttlMs": 1000,
+        "expiresAt": "2026-11-10T03:20:00Z"
+      },
+      "keyword": "false schema",
+      "instancePath": "/expiresAt"
+    },
+    {
+      "def": "expireOptions",
+      "name": "expire with ttlMs",
+      "valid": true,
+      "data": {
+        "ttlMs": 1
+      }
+    },
+    {
+      "def": "expireOptions",
+      "name": "expire with expiresAt",
+      "valid": true,
+      "data": {
+        "expiresAt": "2026-11-10T03:20:00Z"
+      }
+    },
+    {
+      "def": "expireOptions",
+      "name": "expire with neither option",
+      "valid": false,
+      "data": {},
+      "keyword": "required",
+      "instancePath": "",
+      "params": {
+        "missingProperty": "expiresAt"
+      }
+    },
+    {
+      "def": "setOptions",
+      "name": "no write options",
+      "valid": true,
+      "data": {}
+    },
+    {
+      "def": "setOptions",
+      "name": "a relative expiry",
+      "valid": true,
+      "data": {
+        "ttlMs": 60000
+      }
+    },
+    {
+      "def": "setOptions",
+      "name": "an absolute expiry with ifAbsent",
+      "valid": true,
+      "data": {
+        "expiresAt": "2026-11-10T03:20:00Z",
+        "ifAbsent": true
+      }
+    },
+    {
+      "def": "setOptions",
+      "name": "the largest safe ttlMs",
+      "valid": true,
+      "data": {
+        "ttlMs": 9007199254740991
+      }
+    },
+    {
+      "def": "setOptions",
+      "name": "both expiry options",
+      "valid": false,
+      "data": {
+        "ttlMs": 1000,
+        "expiresAt": "2026-11-10T03:20:00Z"
+      },
+      "keyword": "false schema",
+      "instancePath": "/expiresAt"
+    },
+    {
+      "def": "setOptions",
+      "name": "a zero ttlMs",
+      "valid": false,
+      "data": {
+        "ttlMs": 0
+      },
+      "keyword": "minimum",
+      "instancePath": "/ttlMs"
+    },
+    {
+      "def": "setOptions",
+      "name": "a fractional ttlMs",
+      "valid": false,
+      "data": {
+        "ttlMs": 1.5
+      },
+      "keyword": "type",
+      "instancePath": "/ttlMs"
+    },
+    {
+      "def": "setOptions",
+      "name": "an unsafe ttlMs",
+      "valid": false,
+      "data": {
+        "ttlMs": 9007199254740992
+      },
+      "keyword": "maximum",
+      "instancePath": "/ttlMs"
+    },
+    {
+      "def": "setOptions",
+      "name": "ifAbsent as text",
+      "valid": false,
+      "data": {
+        "ifAbsent": "yes"
+      },
+      "keyword": "type",
+      "instancePath": "/ifAbsent"
+    },
+    {
+      "def": "entry",
+      "name": "an entry",
+      "valid": true,
+      "data": {
+        "key": "a",
+        "value": 1
+      }
+    },
+    {
+      "def": "entry",
+      "name": "an entry with options",
+      "valid": true,
+      "data": {
+        "key": "b",
+        "value": [
+          1,
+          2
+        ],
+        "options": {
+          "ifAbsent": true
+        }
+      }
+    },
+    {
+      "def": "entry",
+      "name": "an entry without a value",
+      "valid": false,
+      "data": {
+        "key": "a"
+      },
+      "keyword": "required",
+      "instancePath": "",
+      "params": {
+        "missingProperty": "value"
+      }
+    },
+    {
+      "def": "entry",
+      "name": "an entry without a key",
+      "valid": false,
+      "data": {
+        "value": 1
+      },
+      "keyword": "required",
+      "instancePath": "",
+      "params": {
+        "missingProperty": "key"
+      }
+    },
+    {
+      "def": "entry",
+      "name": "an entry with an empty key",
+      "valid": false,
+      "data": {
+        "key": "",
+        "value": 1
+      },
+      "keyword": "minLength",
+      "instancePath": "/key"
+    },
+    {
+      "def": "readResult",
+      "name": "a live entry",
+      "valid": true,
+      "data": {
+        "found": true,
+        "value": {
+          "n": 1
+        }
+      }
+    },
+    {
+      "def": "readResult",
+      "name": "a live null",
+      "valid": true,
+      "data": {
+        "found": true,
+        "value": null
+      }
+    },
+    {
+      "def": "readResult",
+      "name": "a missing entry",
+      "valid": true,
+      "data": {
+        "found": false
+      }
+    },
+    {
+      "def": "readResult",
+      "name": "found without a value",
+      "valid": false,
+      "data": {
+        "found": true
+      },
+      "keyword": "required",
+      "instancePath": "",
+      "params": {
+        "missingProperty": "value"
+      }
+    },
+    {
+      "def": "readResult",
+      "name": "a miss with a value",
+      "valid": false,
+      "data": {
+        "found": false,
+        "value": 1
+      },
+      "keyword": "false schema",
+      "instancePath": "/value"
+    },
+    {
+      "def": "readResult",
+      "name": "found as text",
+      "valid": false,
+      "data": {
+        "found": "yes"
+      },
+      "keyword": "type",
+      "instancePath": "/found"
+    },
+    {
+      "def": "readResult",
+      "name": "an extra field",
+      "valid": false,
+      "data": {
+        "found": false,
+        "stale": true
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "stale"
+      }
+    },
+    {
+      "def": "writeOutcome",
+      "name": "written",
+      "valid": true,
+      "data": "written"
+    },
+    {
+      "def": "writeOutcome",
+      "name": "exists",
+      "valid": true,
+      "data": "exists"
+    },
+    {
+      "def": "writeOutcome",
+      "name": "skipped is no outcome",
+      "valid": false,
+      "data": "skipped",
+      "keyword": "enum",
+      "instancePath": ""
+    },
+    {
+      "def": "timeToLive",
+      "name": "missing",
+      "valid": true,
+      "data": {
+        "state": "missing"
+      }
+    },
+    {
+      "def": "timeToLive",
+      "name": "persistent",
+      "valid": true,
+      "data": {
+        "state": "persistent"
+      }
+    },
+    {
+      "def": "timeToLive",
+      "name": "expiring with zero left",
+      "valid": true,
+      "data": {
+        "state": "expiring",
+        "ms": 0
+      }
+    },
+    {
+      "def": "timeToLive",
+      "name": "expiring without ms",
+      "valid": false,
+      "data": {
+        "state": "expiring"
+      },
+      "keyword": "required",
+      "instancePath": "",
+      "params": {
+        "missingProperty": "ms"
+      }
+    },
+    {
+      "def": "timeToLive",
+      "name": "persistent with ms",
+      "valid": false,
+      "data": {
+        "state": "persistent",
+        "ms": 5
+      },
+      "keyword": "false schema",
+      "instancePath": "/ms"
+    },
+    {
+      "def": "timeToLive",
+      "name": "negative ms",
+      "valid": false,
+      "data": {
+        "state": "expiring",
+        "ms": -1
+      },
+      "keyword": "minimum",
+      "instancePath": "/ms"
+    },
+    {
+      "def": "timeToLive",
+      "name": "fractional ms",
+      "valid": false,
+      "data": {
+        "state": "expiring",
+        "ms": 1.5
+      },
+      "keyword": "type",
+      "instancePath": "/ms"
+    },
+    {
+      "def": "timeToLive",
+      "name": "an unknown state",
+      "valid": false,
+      "data": {
+        "state": "stale"
+      },
+      "keyword": "enum",
+      "instancePath": "/state"
+    },
+    {
+      "def": "cleanupOptions",
+      "name": "no cleanup options",
+      "valid": true,
+      "data": {}
+    },
+    {
+      "def": "cleanupOptions",
+      "name": "both cleanup options",
+      "valid": true,
+      "data": {
+        "batchSize": 100,
+        "maxBatches": 2
+      }
+    },
+    {
+      "def": "cleanupOptions",
+      "name": "a zero batchSize",
+      "valid": false,
+      "data": {
+        "batchSize": 0
+      },
+      "keyword": "minimum",
+      "instancePath": "/batchSize"
+    },
+    {
+      "def": "cleanupOptions",
+      "name": "a fractional maxBatches",
+      "valid": false,
+      "data": {
+        "maxBatches": 2.5
+      },
+      "keyword": "type",
+      "instancePath": "/maxBatches"
+    },
+    {
+      "def": "cleanupResult",
+      "name": "a cleanup result",
+      "valid": true,
+      "data": {
+        "deleted": 0,
+        "batches": 1
+      }
+    },
+    {
+      "def": "cleanupResult",
+      "name": "a result without batches",
+      "valid": false,
+      "data": {
+        "deleted": 1
+      },
+      "keyword": "required",
+      "instancePath": "",
+      "params": {
+        "missingProperty": "batches"
+      }
+    },
+    {
+      "def": "cleanupResult",
+      "name": "a negative count",
+      "valid": false,
+      "data": {
+        "deleted": -1,
+        "batches": 1
+      },
+      "keyword": "minimum",
+      "instancePath": "/deleted"
+    },
+    {
+      "def": "limits",
+      "name": "the default limits",
+      "valid": true,
+      "data": {}
+    },
+    {
+      "def": "limits",
+      "name": "both limits",
+      "valid": true,
+      "data": {
+        "maxValueBytes": 1,
+        "maxBatchSize": 5000
+      }
+    },
+    {
+      "def": "limits",
+      "name": "a zero maxBatchSize",
+      "valid": false,
+      "data": {
+        "maxBatchSize": 0
+      },
+      "keyword": "minimum",
+      "instancePath": "/maxBatchSize"
+    },
+    {
+      "def": "limits",
+      "name": "a fractional maxValueBytes",
+      "valid": false,
+      "data": {
+        "maxValueBytes": 1.5
+      },
+      "keyword": "type",
+      "instancePath": "/maxValueBytes"
+    },
+    {
+      "def": "errorCode",
+      "name": "schema is a code",
+      "valid": true,
+      "data": "schema"
+    },
+    {
+      "def": "errorCode",
+      "name": "timeout is no code",
+      "valid": false,
+      "data": "timeout",
+      "keyword": "enum",
+      "instancePath": ""
+    },
+    {
+      "def": "operation",
+      "name": "migrate is an operation",
+      "valid": true,
+      "data": "migrate"
+    },
+    {
+      "def": "operation",
+      "name": "clear is no operation",
+      "valid": false,
+      "data": "clear",
+      "keyword": "enum",
+      "instancePath": ""
+    },
+    {
+      "def": "positiveSafeInteger",
+      "name": "one is a safe integer",
+      "valid": true,
+      "data": 1
+    },
+    {
+      "def": "positiveSafeInteger",
+      "name": "zero is not positive",
+      "valid": false,
+      "data": 0,
+      "keyword": "minimum",
+      "instancePath": ""
+    },
+    {
+      "def": "nonnegativeSafeInteger",
+      "name": "zero is nonnegative",
+      "valid": true,
+      "data": 0
+    },
+    {
+      "def": "nonnegativeSafeInteger",
+      "name": "minus one is negative",
+      "valid": false,
+      "data": -1,
+      "keyword": "minimum",
+      "instancePath": ""
+    },
+    {
+      "name": "a non-leap February 29",
+      "valid": false,
+      "data": "2026-02-29T12:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "a February 30",
+      "valid": false,
+      "data": "2024-02-30T12:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "an April 31",
+      "valid": false,
+      "data": "2026-04-31T12:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "a non-leap century",
+      "valid": false,
+      "data": "1900-02-29T12:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "hour 24",
+      "valid": false,
+      "data": "2026-01-01T24:00:00Z",
+      "keyword": "format",
+      "instancePath": "",
+      "def": "expiresAt"
+    },
+    {
+      "name": "a leap February 29",
+      "valid": true,
+      "data": "2024-02-29T12:00:00Z",
+      "def": "expiresAt"
+    },
+    {
+      "name": "a leap century",
+      "valid": true,
+      "data": "2000-02-29T12:00:00Z",
+      "def": "expiresAt"
+    }
+  ]
+}

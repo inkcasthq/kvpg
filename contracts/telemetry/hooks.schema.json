@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/telemetry/hooks.schema.json",
+  "title": "kvpg telemetry: hook arguments",
+  "description": "The safe arguments of the application hooks (T07, S13).",
+  "$defs": {
+    "operationEvent": {
+      "description": "The argument of onOperation. keys is 0 for an operation without keys.",
+      "type": "object",
+      "required": [
+        "operation",
+        "keys",
+        "durationMs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "$ref": "../common.schema.json#/$defs/operation"
+        },
+        "keys": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "hits": {
+          "$ref": "../common.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "durationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "errorCode": {
+          "$ref": "../common.schema.json#/$defs/errorCode"
+        }
+      },
+      "dependentSchemas": {
+        "errorCode": {
+          "type": "object",
+          "properties": {
+            "hits": false
+          }
+        }
+      }
+    },
+    "hookErrorNotice": {
+      "description": "The only argument of onHookError.",
+      "type": "object",
+      "required": [
+        "code"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "const": "hook"
+        }
+      }
+    }
+  }
+}

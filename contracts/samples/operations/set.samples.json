@@ -1,0 +1,123 @@
+{
+  "schema": "operations/set.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "a key and a value",
+      "valid": true,
+      "data": [
+        "k",
+        {
+          "n": 1
+        }
+      ]
+    },
+    {
+      "def": "input",
+      "name": "a relative expiry",
+      "valid": true,
+      "data": [
+        "k",
+        null,
+        {
+          "ttlMs": 60000
+        }
+      ]
+    },
+    {
+      "def": "input",
+      "name": "ifAbsent",
+      "valid": true,
+      "data": [
+        "k",
+        "v",
+        {
+          "ifAbsent": true
+        }
+      ]
+    },
+    {
+      "def": "input",
+      "name": "no value",
+      "valid": false,
+      "data": [
+        "k"
+      ],
+      "keyword": "minItems",
+      "instancePath": ""
+    },
+    {
+      "def": "input",
+      "name": "both expiry options",
+      "valid": false,
+      "data": [
+        "k",
+        1,
+        {
+          "ttlMs": 1,
+          "expiresAt": "2026-11-10T03:20:00Z"
+        }
+      ],
+      "keyword": "false schema",
+      "instancePath": "/2/expiresAt"
+    },
+    {
+      "def": "result",
+      "name": "written",
+      "valid": true,
+      "data": true
+    },
+    {
+      "def": "result",
+      "name": "ifAbsent met a live entry",
+      "valid": true,
+      "data": false
+    },
+    {
+      "def": "result",
+      "name": "a text result",
+      "valid": false,
+      "data": "true",
+      "keyword": "type",
+      "instancePath": ""
+    },
+    {
+      "def": "error",
+      "name": "a value_too_large error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "value_too_large",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "codec is not a code of set",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "codec",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "value_too_large",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

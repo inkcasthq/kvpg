@@ -1,0 +1,89 @@
+{
+  "schema": "operations/ttl.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "one key",
+      "valid": true,
+      "data": [
+        "k"
+      ]
+    },
+    {
+      "def": "input",
+      "name": "no key",
+      "valid": false,
+      "data": [],
+      "keyword": "minItems",
+      "instancePath": ""
+    },
+    {
+      "def": "result",
+      "name": "expiring",
+      "valid": true,
+      "data": {
+        "state": "expiring",
+        "ms": 1500
+      }
+    },
+    {
+      "def": "result",
+      "name": "persistent",
+      "valid": true,
+      "data": {
+        "state": "persistent"
+      }
+    },
+    {
+      "def": "result",
+      "name": "expiring without ms",
+      "valid": false,
+      "data": {
+        "state": "expiring"
+      },
+      "keyword": "required",
+      "instancePath": "",
+      "params": {
+        "missingProperty": "ms"
+      }
+    },
+    {
+      "def": "error",
+      "name": "a driver error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "driver",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "codec is not a code of ttl",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "codec",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "driver",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

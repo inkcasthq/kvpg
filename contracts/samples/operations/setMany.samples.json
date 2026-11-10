@@ -1,0 +1,132 @@
+{
+  "schema": "operations/setMany.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "a mixed batch",
+      "valid": true,
+      "data": [
+        [
+          {
+            "key": "a",
+            "value": 1
+          },
+          {
+            "key": "b",
+            "value": 2,
+            "options": {
+              "ifAbsent": true
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "def": "input",
+      "name": "an empty batch",
+      "valid": true,
+      "data": [
+        []
+      ]
+    },
+    {
+      "def": "input",
+      "name": "an entry without a value",
+      "valid": false,
+      "data": [
+        [
+          {
+            "key": "a"
+          }
+        ]
+      ],
+      "keyword": "required",
+      "instancePath": "/0/0",
+      "params": {
+        "missingProperty": "value"
+      }
+    },
+    {
+      "def": "input",
+      "name": "a negative ttlMs",
+      "valid": false,
+      "data": [
+        [
+          {
+            "key": "a",
+            "value": 1,
+            "options": {
+              "ttlMs": -5
+            }
+          }
+        ]
+      ],
+      "keyword": "minimum",
+      "instancePath": "/0/0/options/ttlMs"
+    },
+    {
+      "def": "result",
+      "name": "both outcomes",
+      "valid": true,
+      "data": [
+        "written",
+        "exists"
+      ]
+    },
+    {
+      "def": "result",
+      "name": "no outcomes",
+      "valid": true,
+      "data": []
+    },
+    {
+      "def": "result",
+      "name": "an unknown outcome",
+      "valid": false,
+      "data": [
+        "written",
+        "skipped"
+      ],
+      "keyword": "enum",
+      "instancePath": "/1"
+    },
+    {
+      "def": "error",
+      "name": "a invalid_batch error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_batch",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "codec is not a code of setMany",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "codec",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_batch",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

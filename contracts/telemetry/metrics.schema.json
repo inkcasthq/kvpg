@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/inkcasthq/kvpg/main/contracts/telemetry/metrics.schema.json",
+  "title": "kvpg telemetry: one metric point",
+  "description": "One kvpg metric point in normal form: name, instrument, unit, attributes and value (T09). The six metrics give the RED metrics of each operation.",
+  "type": "object",
+  "required": [
+    "name",
+    "instrument",
+    "unit",
+    "attributes",
+    "value"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "enum": [
+        "kvpg.operation.duration",
+        "kvpg.operation.calls",
+        "kvpg.operation.errors",
+        "kvpg.cache.hits",
+        "kvpg.cache.misses",
+        "kvpg.cleanup.rows_deleted"
+      ]
+    },
+    "instrument": {
+      "enum": [
+        "histogram",
+        "counter"
+      ]
+    },
+    "unit": {
+      "type": "string"
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kvpg.operation",
+        "kvpg.store",
+        "kvpg.trigger"
+      ],
+      "properties": {
+        "kvpg.operation": {
+          "$ref": "../common.schema.json#/$defs/operation"
+        },
+        "kvpg.store": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A fixed implementation identifier, such as postgresql (T07)."
+        },
+        "kvpg.trigger": {
+          "enum": [
+            "foreground",
+            "interval"
+          ]
+        },
+        "kvpg.outcome": {
+          "enum": [
+            "success",
+            "error"
+          ]
+        },
+        "error.type": {
+          "$ref": "../common.schema.json#/$defs/errorCode"
+        }
+      }
+    },
+    "value": {}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.operation.duration"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "instrument": {
+            "const": "histogram"
+          },
+          "unit": {
+            "const": "s"
+          },
+          "value": {
+            "type": "object",
+            "required": [
+              "count",
+              "sum"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "count": {
+                "$ref": "../common.schema.json#/$defs/positiveSafeInteger"
+              },
+              "sum": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "attributes": {
+            "type": "object",
+            "required": [
+              "kvpg.outcome"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kvpg.outcome": {
+                      "const": "error"
+                    }
+                  },
+                  "required": [
+                    "kvpg.outcome"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "error.type"
+                  ]
+                },
+                "else": {
+                  "properties": {
+                    "error.type": false
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.operation.calls"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "instrument": {
+            "const": "counter"
+          },
+          "unit": {
+            "const": "{call}"
+          },
+          "value": {
+            "$ref": "../common.schema.json#/$defs/positiveSafeInteger",
+            "description": "A counter increment. A zero increment makes no point."
+          },
+          "attributes": {
+            "type": "object",
+            "required": [
+              "kvpg.outcome"
+            ],
+            "properties": {
+              "error.type": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.operation.errors"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "instrument": {
+            "const": "counter"
+          },
+          "unit": {
+            "const": "{error}"
+          },
+          "value": {
+            "$ref": "../common.schema.json#/$defs/positiveSafeInteger",
+            "description": "A counter increment. A zero increment makes no point."
+          },
+          "attributes": {
+            "type": "object",
+            "required": [
+              "error.type"
+            ],
+            "properties": {
+              "kvpg.outcome": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.cache.hits"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "instrument": {
+            "const": "counter"
+          },
+          "unit": {
+            "const": "{key}"
+          },
+          "value": {
+            "$ref": "../common.schema.json#/$defs/positiveSafeInteger",
+            "description": "A counter increment. A zero increment makes no point."
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.outcome": false,
+              "error.type": false,
+              "kvpg.operation": {
+                "enum": [
+                  "get",
+                  "getMany",
+                  "has",
+                  "ttl"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.cache.misses"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "instrument": {
+            "const": "counter"
+          },
+          "unit": {
+            "const": "{key}"
+          },
+          "value": {
+            "$ref": "../common.schema.json#/$defs/positiveSafeInteger",
+            "description": "A counter increment. A zero increment makes no point."
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.outcome": false,
+              "error.type": false,
+              "kvpg.operation": {
+                "enum": [
+                  "get",
+                  "getMany",
+                  "has",
+                  "ttl"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "kvpg.cleanup.rows_deleted"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "instrument": {
+            "const": "counter"
+          },
+          "unit": {
+            "const": "{row}"
+          },
+          "value": {
+            "$ref": "../common.schema.json#/$defs/positiveSafeInteger",
+            "description": "A counter increment. A zero increment makes no point."
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kvpg.outcome": false,
+              "error.type": false,
+              "kvpg.operation": {
+                "const": "cleanupExpired"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

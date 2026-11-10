@@ -1,0 +1,78 @@
+{
+  "schema": "operations/has.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "one key",
+      "valid": true,
+      "data": [
+        "k"
+      ]
+    },
+    {
+      "def": "input",
+      "name": "a key with NUL",
+      "valid": false,
+      "data": [
+        "a\u0000"
+      ],
+      "keyword": "x-kvpg-utf8",
+      "instancePath": "/0",
+      "params": {
+        "rule": "noNul"
+      }
+    },
+    {
+      "def": "result",
+      "name": "live",
+      "valid": true,
+      "data": true
+    },
+    {
+      "def": "result",
+      "name": "null",
+      "valid": false,
+      "data": null,
+      "keyword": "type",
+      "instancePath": ""
+    },
+    {
+      "def": "error",
+      "name": "a closed error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "closed",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "codec is not a code of has",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "codec",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "closed",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

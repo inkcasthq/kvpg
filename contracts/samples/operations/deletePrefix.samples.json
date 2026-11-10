@@ -1,0 +1,83 @@
+{
+  "schema": "operations/deletePrefix.schema.json",
+  "cases": [
+    {
+      "def": "input",
+      "name": "a prefix",
+      "valid": true,
+      "data": [
+        "user:"
+      ]
+    },
+    {
+      "def": "input",
+      "name": "wildcard characters are literal",
+      "valid": true,
+      "data": [
+        "%_\\"
+      ]
+    },
+    {
+      "def": "input",
+      "name": "the empty prefix",
+      "valid": false,
+      "data": [
+        ""
+      ],
+      "keyword": "minLength",
+      "instancePath": "/0"
+    },
+    {
+      "def": "result",
+      "name": "three live entries",
+      "valid": true,
+      "data": 3
+    },
+    {
+      "def": "result",
+      "name": "a fractional count",
+      "valid": false,
+      "data": 1.5,
+      "keyword": "type",
+      "instancePath": ""
+    },
+    {
+      "def": "error",
+      "name": "a invalid_key error",
+      "valid": true,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_key",
+        "message": "synthetic message"
+      }
+    },
+    {
+      "def": "error",
+      "name": "invalid_batch is not a code of deletePrefix",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_batch",
+        "message": "synthetic message"
+      },
+      "keyword": "enum",
+      "instancePath": "/code"
+    },
+    {
+      "def": "error",
+      "name": "an error with its cause",
+      "valid": false,
+      "data": {
+        "name": "KvError",
+        "code": "invalid_key",
+        "message": "synthetic message",
+        "cause": "synthetic cause"
+      },
+      "keyword": "additionalProperties",
+      "instancePath": "",
+      "params": {
+        "additionalProperty": "cause"
+      }
+    }
+  ]
+}

@@ -18,7 +18,7 @@ test('T13 the official in-memory exporters collect all three signals', {
     const span = session.api.trace.getTracer('kvpg', '0.0.0').startSpan('kvpg.get', { attributes });
     span.setStatus({ code: session.api.SpanStatusCode.ERROR });
     session.api.context.with(session.api.trace.setSpan(session.api.context.active(), span), () => {
-      session.api.logs.getLogger('kvpg', '0.0.0').emit({ eventName: 'kvpg.operation.failed', severityNumber: 17, body: 'kvpg operation failed', attributes: { ...attributes, 'kvpg.duration': 0.01 } });
+      session.logs.getLogger('kvpg', '0.0.0').emit({ eventName: 'kvpg.operation.failed', severityNumber: 17, body: 'kvpg operation failed', attributes: { ...attributes, 'kvpg.duration': 0.01 } });
     });
     span.end();
     session.api.metrics.getMeter('kvpg', '0.0.0').createHistogram('kvpg.operation.duration', { unit: 's' }).record(0.01, attributes);

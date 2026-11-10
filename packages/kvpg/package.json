@@ -9,6 +9,13 @@
     ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
   },
   "files": ["dist"],
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": ">=0.200.0 <1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api-logs": { "optional": true }
+  },
   "engines": { "node": ">=22.14.0" },
   "repository": { "type": "git", "url": "git+https://github.com/inkcasthq/kvpg.git", "directory": "packages/kvpg" },
   "keywords": ["postgresql", "cache", "key-value", "ttl"]

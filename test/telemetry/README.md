@@ -1,24 +1,24 @@
 # Telemetry conformance tests
 
 This directory tests the contract in `docs/telemetry.md`.
-The current repository has no PostgreSQL store under issue #2.
+The suite runs on the PostgreSQL store of issue #2, on each database of `KVPG_TEST_DATABASE_URLS`.
 The tests do not create a substitute store.
 A pending case names its blocking issue.
 Pending cases do not prove conformance.
 
 The assertion tests use synthetic exported records to test the assertions themselves.
 Those records are not a cache implementation or SDK output.
-If the development dependencies are present, the exporter setup uses the official OpenTelemetry in-memory exporters.
-The default job does not install those dependencies.
-The proposed SDK 3 backend does not resolve the owner choice in issue #14.
+The exporter setup uses the official OpenTelemetry in-memory exporters of the SDK 2 generation (`docs/decisions.md`, RF21).
 
 ## Operate the tests
 
-From the repository root, operate the tests:
+From the repository root, operate the tests. The variable holds one URL for each PostgreSQL version, separated by commas:
 
 ```sh
-npm test
+KVPG_TEST_DATABASE_URLS=postgres://USER:PASSWORD@HOST:PORT/DATABASE npm test
 ```
+
+Without a database of a version, each case of that version is pending with that reason.
 
 For assertions without the SDK, use:
 
@@ -40,10 +40,12 @@ With a real store factory supplied, a missing SDK package fails setup instead of
 | `sdk-harness.mjs` | Official exporters, application-owned providers, context, sampling, and API probes |
 | `sdk-harness.test.mjs` | Dependency availability and a three-signal exporter smoke case |
 | `suite.mjs` | Shared tests for a real store fixture |
-| `store.test.mjs` | Explicit issue #2 pending registration |
+| `postgres-fixture.mjs` | The real-store fixture of the PostgreSQL store, with the controls below |
+| `postgres-telemetry.mjs` | Registers the suite for one PostgreSQL major version |
+| `store-pg15.test.mjs` to `store-pg18.test.mjs` | One worker for each version, so each worker has one provider lifetime |
 | `prometheus.mjs` | Real Prometheus ingestion assertions for scrape and OTLP |
-| `prometheus-scrape.test.mjs` | Pending scrape integration under #2 and #6 |
-| `prometheus-otlp.test.mjs` | Pending OTLP integration under #2 and #6 |
+| `prometheus-scrape.test.mjs` | Pending scrape integration under #6 |
+| `prometheus-otlp.test.mjs` | Pending OTLP integration under #6 |
 
 The privacy inspector examines data properties, including non-enumerable causes, without calling getters.
 It also examines map entries, set entries, bytes, and property names.
@@ -62,15 +64,11 @@ The API probe distinguishes counters from observable instruments because exporte
 
 ## SDK development dependencies
 
-The proposed backend expects these packages in the test workspace:
+The test backend uses these packages, at the exact versions that `docs/decisions.md` (RF21) names:
 
-- `@opentelemetry/api`, with the API 1.10 logs interface.
-- `@opentelemetry/sdk-trace`, from the SDK 3 generation.
-- `@opentelemetry/sdk-metrics`, from the SDK 3 generation.
-- `@opentelemetry/sdk-logs`, from the SDK 3 generation.
-- `@opentelemetry/resources`, from the SDK 3 generation.
-- `@opentelemetry/context-async-hooks`, from the matching generation.
-- `@opentelemetry/core`, from the matching generation.
+- `@opentelemetry/api` 1.9.1 and `@opentelemetry/api-logs` 0.223.1.
+- `@opentelemetry/sdk-trace-base`, `@opentelemetry/sdk-metrics`, `@opentelemetry/resources`, `@opentelemetry/context-async-hooks` and `@opentelemetry/core` 2.12.1.
+- `@opentelemetry/sdk-logs` 0.223.1.
 
 These packages belong to the test environment, not the main package runtime.
 The test backend registers providers only inside an isolated `node:test` worker.
@@ -82,23 +80,22 @@ It does not replace an existing provider silently.
 ## Supply a real store fixture
 
 A fixture supplies a real store and test controls.
-Register the shared suite from a new test file after issue #2 supplies `createStore`:
+`postgres-telemetry.mjs` registers the shared suite for one database:
 
 ```js
-import { telemetryConformance } from './suite.mjs';
-import { makePostgresFixture } from './postgres-fixture.mjs';
-
-telemetryConformance('PostgreSQL', makePostgresFixture, {
+telemetryConformance(`PostgreSQL ${major}`, makePostgresFixture(url), {
   store: 'postgresql',
-  version: '1.0.0',
-  defaultEnabled: true, // Candidate declaration until the owner decides #6.
+  version: VERSION,
+  defaultEnabled: true,
   auxiliaryOperations: ['schemaSql', 'migrate'],
+  pending: PENDING,
+  unavailable: `no PostgreSQL ${major} database in KVPG_TEST_DATABASE_URLS`,
 });
 ```
 
-The example factory is not implemented here.
 The version equals the tested package version.
-The default declaration describes the candidate under test, not an owner decision.
+Owner decision #6 sets the default. If the application registers a provider, telemetry is on.
+`pending` names the issue of each case that needs a part outside build batch 1.
 For a different package, `manifestURL` identifies its runtime manifest.
 The manifest test covers declared direct dependencies.
 Release qualification also examines the installed runtime tree and bundled code for forbidden SDK imports.
@@ -135,8 +132,8 @@ It returns the following controls:
 | `runIntervalCleanup()` | Fire the actual registered interval callback and await its completion |
 | `runDatabaseScheduledCleanup()` | Operate the actual database-scheduled SQL outside the JavaScript store |
 | `expiredRowCount()` | Read remaining expired rows directly through the backend |
-| `createAdapter()` | Return a real delegating adapter over this store |
-| `driverScope` | Name the selected external driver instrumentation scope |
+| `createAdapter()` | Return a real delegating adapter over this store (#4 and #5, not in batch 1) |
+| `driverScope` | Name the selected external driver instrumentation scope (#6, not in batch 1) |
 
 Failure controls wrap the real driver boundary.
 They do not manufacture spans, metrics, logs, hook arguments, or store results.
@@ -178,7 +175,7 @@ Its cleanup stops the store, providers, reader, and Prometheus process after suc
 
 ## Remaining release obligations
 
-The current pending registrations cover the absent store, missing SDK packages, and absent Prometheus fixtures.
+The pending cases cover the driver CLIENT span owner (#6), the adapter (#4 and #5), and the Prometheus routes (#6).
 They do not establish supported API/SDK pairs or database versions.
 The full T12 benchmark remains under issues #6 and #7.
 

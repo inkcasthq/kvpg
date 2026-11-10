@@ -2,7 +2,7 @@
 
 A key-value cache in PostgreSQL for Node.js, with a written contract that other stores can also keep.
 
-Status: version 0, in design. This repository holds the contract, the extension points and the design. The PostgreSQL store is not built yet. The issues below track the work. Do not use kvpg in production before release 1.0.
+Status: release 1.0 in progress. The contract (version 1), the design decisions and the contract payloads are written. The issues below track the work. Do not use kvpg in production before release 1.0.
 
 ## Why
 
@@ -14,10 +14,15 @@ kvpg also writes the behavior down as a standard (`docs/standard.md`), with a co
 
 | Path | What | State |
 |---|---|---|
-| `docs/standard.md` | The cache contract, rules S1 to S12 | Written |
+| `docs/standard.md` | The cache contract, rules S1 to S14 | Written |
+| `docs/spec-1.0.md` | The 1.0 specification, R01 to R23 | Written |
+| `docs/decisions.md` | The owner decisions and the design refinements | Written |
+| `docs/telemetry.md` | The native telemetry contract, T01 to T13 | Written |
 | `docs/design.md` | The table, the SQL and the choices, with sources | Written |
 | `docs/extending.md` | The five extension points | Written |
-| `packages/kvpg` | `@inkcasthq/kvpg`: the contract types and the extension points | Types written, store planned (#2) |
+| `contracts/` | The contract payloads as JSON Schema 2020-12, with samples | Written |
+| `test/contracts/` | The contract gate test and the drift test of types against schemas | Written |
+| `packages/kvpg` | `@inkcasthq/kvpg`: the contract types (version 1) and the extension points | Types written, store planned (#2) |
 | `packages/kvpg-conformance` | `@inkcasthq/kvpg-conformance`: the test suite of the contract | Planned (#3) |
 | `packages/kvpg-keyv` | `@inkcasthq/kvpg-keyv`: a Keyv storage adapter | Planned (#4) |
 

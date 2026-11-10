@@ -30,7 +30,7 @@ export function prometheusAcceptance(route, makeIntegration) {
   assert.ok(['scrape', 'otlp'].includes(route));
   if (makeIntegration !== undefined) assert.equal(typeof makeIntegration, 'function');
   test(`T11 Prometheus ${route} receives the native cache counter without duplicate increments`, {
-    skip: makeIntegration === undefined ? '#2 and #6: the store and owned Prometheus integration fixture are not built' : false,
+    skip: makeIntegration === undefined ? '#6: the owned Prometheus integration fixture is a later build phase; the store of #2 is built' : false,
     timeout: 15_000,
   }, async () => {
     const integration = await makeIntegration(route);

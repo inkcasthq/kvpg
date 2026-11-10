@@ -5,7 +5,8 @@ export const OPERATIONS = Object.freeze([
   'get', 'getMany', 'set', 'setMany', 'delete', 'deleteMany', 'deletePrefix',
   'has', 'ttl', 'expire', 'persist', 'cleanupExpired', 'close', 'schemaSql', 'migrate',
 ]);
-export const ERROR_CODES = Object.freeze(['invalid_key', 'invalid_ttl', 'invalid_value', 'codec', 'driver', 'closed']);
+export const ERROR_CODES = Object.freeze(['invalid_key', 'invalid_ttl', 'invalid_value', 'invalid_batch', 'value_too_large',
+  'batch_too_large', 'codec', 'driver', 'schema', 'closed']);
 const READS = new Set(['get', 'getMany', 'has', 'ttl']);
 const BASE = ['kvpg.operation', 'kvpg.store', 'kvpg.trigger'];
 const COUNTS = ['kvpg.keys', 'kvpg.hits', 'kvpg.misses', 'kvpg.rows_deleted', 'kvpg.batches'];
@@ -13,9 +14,17 @@ const SPAN_FIELDS = [...BASE, ...COUNTS, 'kvpg.outcome', 'error.type'];
 const LOG_FIELDS = [...BASE, 'kvpg.keys', 'kvpg.rows_deleted', 'kvpg.batches', 'kvpg.outcome', 'error.type', 'kvpg.duration'];
 const METRICS = Object.freeze({
   'kvpg.operation.duration': ['s', 'HISTOGRAM'],
+  'kvpg.operation.calls': ['{call}', 'COUNTER'],
+  'kvpg.operation.errors': ['{error}', 'COUNTER'],
   'kvpg.cache.hits': ['{key}', 'COUNTER'],
   'kvpg.cache.misses': ['{key}', 'COUNTER'],
   'kvpg.cleanup.rows_deleted': ['{row}', 'COUNTER'],
+});
+// The allowed and the required attributes of each metric point (T09). Other counters use BASE for both.
+const POINT_FIELDS = Object.freeze({
+  'kvpg.operation.duration': [[...BASE, 'kvpg.outcome', 'error.type'], [...BASE, 'kvpg.outcome']],
+  'kvpg.operation.calls': [[...BASE, 'kvpg.outcome'], [...BASE, 'kvpg.outcome']],
+  'kvpg.operation.errors': [[...BASE, 'error.type'], [...BASE, 'error.type']],
 });
 const LOGS = Object.freeze({
   'kvpg.operation.failed': [17, 'kvpg operation failed', 'error'],
@@ -158,8 +167,8 @@ export function assertMetricPoints(points, expected = {}) {
     assert.equal(point.instrumentType, definition[1], 'wrong metric instrument');
     scope(point.scope, expected);
     const duration = point.name === 'kvpg.operation.duration';
-    attributes(point.attributes, duration ? [...BASE, 'kvpg.outcome', 'error.type'] : BASE,
-      duration ? [...BASE, 'kvpg.outcome'] : BASE, expected);
+    const fields = POINT_FIELDS[point.name] ?? [BASE, BASE];
+    attributes(point.attributes, fields[0], fields[1], expected);
     if (duration) {
       count(point.value?.count, 'histogram count');
       assert.ok(point.value.count > 0, 'duration histogram needs a recorded observation');
@@ -170,7 +179,8 @@ export function assertMetricPoints(points, expected = {}) {
       count(point.value, 'counter increment');
       assert.ok(point.value > 0, 'zero counter increments must produce no point');
       if (point.name === 'kvpg.cleanup.rows_deleted') assert.equal(point.attributes['kvpg.operation'], 'cleanupExpired');
-      else assert.ok(READS.has(point.attributes['kvpg.operation']), 'cache counters require reads');
+      else if (point.name === 'kvpg.operation.errors') assert.ok(ERROR_CODES.includes(point.attributes['error.type']), 'error counter requires error.type');
+      else if (point.name !== 'kvpg.operation.calls') assert.ok(READS.has(point.attributes['kvpg.operation']), 'cache counters require reads');
     }
   }
 }
@@ -260,9 +270,70 @@ export function assertConformanceSignals(snapshot, expected, markers, hooks = []
     scope: span.instrumentationScope, attributes: span.attributes, events: span.events, links: span.links, status: span.status }));
   assertPrivateDataAbsent({ spans: snapshot.spans, publicFields, logs: snapshot.logs, metrics: snapshot.rawMetrics, hooks }, markers);
   assertMetricPoints(snapshot.metrics, expected);
+  assertRedMetrics(snapshot.metrics);
+  assertContractRecords(snapshot);
   for (const span of snapshot.spans.filter((span) => span.instrumentationScope.name === 'kvpg')) {
     assertOperationSpan(span, { ...expected, operation: span.attributes['kvpg.operation'], outcome: span.attributes['kvpg.outcome'] });
   }
   for (const record of snapshot.logs.filter((record) => record.instrumentationScope.name === 'kvpg')) assertLogRecord(record, expected);
   for (const event of hooks) assertHookEvent(event);
+}
+
+const streamKey = (attributes, names) => JSON.stringify(names.map((name) => attributes[name] ?? null));
+/**
+ * T09 RED metrics: for each attribute set, the call count equals the histogram count, and the error count of each
+ * code equals the histogram count of the error points with that code. Works on cumulative points or on deltas.
+ */
+export function assertRedMetrics(points) {
+  const totals = (name, names, value) => {
+    const map = new Map();
+    for (const point of points.filter((item) => item.name === name)) {
+      const key = streamKey(point.attributes, names);
+      map.set(key, (map.get(key) ?? 0) + value(point));
+    }
+    return map;
+  };
+  const callFields = [...BASE, 'kvpg.outcome'];
+  const errorFields = [...BASE, 'error.type'];
+  const histogramCalls = totals('kvpg.operation.duration', callFields, (point) => point.value.count);
+  const histogramErrors = totals('kvpg.operation.duration', errorFields, (point) => (point.attributes['kvpg.outcome'] === 'error' ? point.value.count : 0));
+  for (const [key, count] of [...histogramErrors]) if (count === 0) histogramErrors.delete(key);
+  assert.deepEqual(Object.fromEntries(totals('kvpg.operation.calls', callFields, (point) => point.value)), Object.fromEntries(histogramCalls),
+    'kvpg.operation.calls must equal the duration histogram count of each attribute set');
+  assert.deepEqual(Object.fromEntries(totals('kvpg.operation.errors', errorFields, (point) => point.value)), Object.fromEntries(histogramErrors),
+    'kvpg.operation.errors must equal the error histogram count of each code');
+}
+
+const SPAN_KINDS = ['INTERNAL', 'SERVER', 'CLIENT', 'PRODUCER', 'CONSUMER'];
+const STATUS_CODES = ['UNSET', 'OK', 'ERROR'];
+/** The normal form of contracts/README.md for each kvpg span, metric point and log record. */
+export function normalForms(snapshot) {
+  return {
+    spans: snapshot.spans.filter((span) => span.instrumentationScope.name === 'kvpg').map((span) => ({
+      name: span.name, kind: SPAN_KINDS[span.kind], status: STATUS_CODES[span.status.code], attributes: { ...span.attributes } })),
+    metrics: snapshot.metrics.map((point) => ({ name: point.name, instrument: point.instrumentType.toLowerCase(), unit: point.unit,
+      attributes: { ...point.attributes }, value: point.instrumentType === 'HISTOGRAM' ? { count: point.value.count, sum: point.value.sum } : point.value })),
+    logs: snapshot.logs.filter((record) => record.instrumentationScope.name === 'kvpg').map((record) => ({
+      eventName: record.eventName, severityNumber: record.severityNumber, body: record.body, attributes: { ...record.attributes } })),
+  };
+}
+
+// The contract schemas of contracts/telemetry/, compiled once when this module loads.
+const validators = await (async () => {
+  const { createAjv, schemaFiles } = await import('../contracts/contracts.mjs');
+  const files = schemaFiles();
+  const ajv = createAjv(files);
+  const validator = (file) => ajv.getSchema(files.find((item) => item.file === file).schema.$id);
+  return { spans: validator('telemetry/spans.schema.json'), metrics: validator('telemetry/metrics.schema.json'),
+    logs: validator('telemetry/logs.schema.json') };
+})();
+
+/** Each exported kvpg record in normal form passes its schema of contracts/telemetry/. */
+export function assertContractRecords(snapshot) {
+  const forms = normalForms(snapshot);
+  for (const signal of ['spans', 'metrics', 'logs']) {
+    for (const record of forms[signal]) {
+      assert.ok(validators[signal](record), `a ${signal} record breaks contracts/telemetry/${signal}.schema.json: ${JSON.stringify(validators[signal].errors)}`);
+    }
+  }
 }
