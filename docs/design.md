@@ -82,9 +82,10 @@ D8. Cleanup with `FOR UPDATE SKIP LOCKED`. Two cleanups at the same time then ta
 
 D9. The store gives its DDL as text (`schemaSql()`), and a `migrate()` call runs it. An application with its own migration tool applies the text in its own migration.
 
+D10. `deletePrefix` deletes the key range `key >= $1 AND key < $2`. `$2` is the prefix with its last code point replaced by the next code point. With `COLLATE "C"`, this range holds exactly the keys with the prefix, and it uses the primary key index. `starts_with(key, $1)` was measured as a sequential scan in a generic plan, which postgres.js uses. The measurement is `bench/prefix-plan.mjs`, on PostgreSQL 15 to 18 (`docs/decisions.md`, RF9).
+
 ## Open for the implementation
 
-- `deletePrefix` must use the primary key index and treat `%`, `_` and `\` as plain characters. Two candidates are a range `key >= $1 AND key < upper_bound` and `starts_with(key, $1)`. The store issue (#2) chooses one and proves it with `EXPLAIN` on PostgreSQL 15, 16, 17 and 18.
 - The size of a cleanup batch for a large table without an index on the expiry (D1).
 - The cost of `getMany` with `key = ANY($1)` for 1, 100 and 1,000 keys.
 

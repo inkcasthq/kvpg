@@ -14,7 +14,7 @@ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const store = createStore({ db: pool });
 ```
 
-`setMany` needs one transaction, so it needs `connect()` too (`TransactionalQueryable`). A `pg` Pool has it.
+`setMany` is one SQL statement, so it needs no transaction of its own. A `pg` Pool and a `pg` Client both work for every operation. `TransactionalQueryable` (`connect()`) is for later capabilities that need a fixed connection (`docs/spec-1.0.md`, R21).
 
 For another driver, write a small adapter. The adapter for postgres.js is issue #5.
 

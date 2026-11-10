@@ -6,7 +6,8 @@ import { flattenMetrics, metricDelta } from './assertions.mjs';
 const require = createRequire(import.meta.url);
 const PACKAGES = Object.freeze({
   api: '@opentelemetry/api',
-  traces: '@opentelemetry/sdk-trace',
+  apiLogs: '@opentelemetry/api-logs',
+  traces: '@opentelemetry/sdk-trace-base',
   metrics: '@opentelemetry/sdk-metrics',
   logs: '@opentelemetry/sdk-logs',
   resources: '@opentelemetry/resources',
@@ -34,15 +35,16 @@ async function loadSdk() {
     return [key, { ...module.default, ...module }];
   }));
   const sdk = Object.fromEntries(entries);
-  assert.equal(typeof sdk.api.logs?.getLogger, 'function', '#14: this test backend requires the API 1.10 logs interface');
+  assert.equal(typeof sdk.apiLogs.logs?.getLogger, 'function', '#14: this test backend requires the api-logs interface');
   return sdk;
 }
 
-// The SDK backend targets the proposed SDK 3 generation. It does not select #14.
+// The SDK backend targets the SDK 2 generation that #14 selected: API 1.9 and logs through api-logs (decisions.md OD5).
 // Each suite owns a fresh node:test worker and one provider lifetime.
 export async function createSession({ register = true, metricReaders = [] } = {}) {
   const sdk = await loadSdk();
   const { api } = sdk;
+  const { logs } = sdk.apiLogs;
   const resource = sdk.resources.resourceFromAttributes({ 'service.name': 'kvpg-conformance' });
   const traceExporter = new sdk.traces.InMemorySpanExporter();
   const metricExporter = new sdk.metrics.InMemoryMetricExporter(sdk.metrics.AggregationTemporality.CUMULATIVE);
@@ -52,8 +54,8 @@ export async function createSession({ register = true, metricReaders = [] } = {}
   let sampling = 'always';
   const sampler = { shouldSample: (...args) => choices[sampling].shouldSample(...args), toString: () => `kvpg-test-${sampling}` };
   const meterProvider = new sdk.metrics.MeterProvider({ resource, readers: [reader, ...metricReaders] });
-  const tracerProvider = new sdk.traces.TracerProvider({ resource, sampler, spanProcessors: [new sdk.traces.SimpleSpanProcessor(traceExporter)] });
-  const loggerProvider = new sdk.logs.LoggerProvider({ resource, processors: [new sdk.logs.SimpleLogRecordProcessor(logExporter)] });
+  const tracerProvider = new sdk.traces.BasicTracerProvider({ resource, sampler, spanProcessors: [new sdk.traces.SimpleSpanProcessor(traceExporter)] });
+  const loggerProvider = new sdk.logs.LoggerProvider({ resource, processors: [new sdk.logs.SimpleLogRecordProcessor({ exporter: logExporter })] });
   const contextManager = new sdk.context.AsyncLocalStorageContextManager().enable();
   const registered = new Set();
   const calls = { traces: 0, metrics: 0, logs: 0 };
@@ -133,7 +135,7 @@ export async function createSession({ register = true, metricReaders = [] } = {}
     const results = await Promise.allSettled([tracerProvider.shutdown(), meterProvider.shutdown(), loggerProvider.shutdown()]);
     if (registered.has('traces')) api.trace.disable();
     if (registered.has('metrics')) api.metrics.disable();
-    if (registered.has('logs')) api.logs.disable();
+    if (registered.has('logs')) logs.disable();
     if (registered.has('context')) api.context.disable();
     if (registered.has('propagation')) api.propagation.disable();
     contextManager.disable();
@@ -143,10 +145,11 @@ export async function createSession({ register = true, metricReaders = [] } = {}
   function install() {
     assert.ok(!stopped, 'test session is closed');
     assert.ok(!registered.has('traces'), 'providers can be installed only once per worker');
+    // api-logs returns the provider it installed, where the API returns true.
     for (const [signal, set] of [
       ['traces', () => api.trace.setGlobalTracerProvider(tracing)],
       ['metrics', () => api.metrics.setGlobalMeterProvider(metering)],
-      ['logs', () => api.logs.setGlobalLoggerProvider(logging)],
+      ['logs', () => logs.setGlobalLoggerProvider(logging) === logging],
     ]) {
       assert.equal(set(), true, `test worker already has a ${signal} provider`);
       registered.add(signal);
@@ -164,7 +167,7 @@ export async function createSession({ register = true, metricReaders = [] } = {}
   }
 
   return {
-    api, faults, createdSpans, instruments, install, shutdown,
+    api, logs, faults, createdSpans, instruments, install, shutdown,
     sample(mode) { assert.ok(Object.hasOwn(choices, mode)); sampling = mode; },
     async snapshot() {
       await Promise.all([tracerProvider.forceFlush(), meterProvider.forceFlush(), loggerProvider.forceFlush()]);
