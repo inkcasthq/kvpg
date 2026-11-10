@@ -14,9 +14,9 @@ export interface Subject {
   readonly store: KvStore<unknown>;
   /** Closes the store if it is open, and releases the backend of this subject. */
   dispose(): Promise<void>;
-  /** The backend calls of this store so far, for the rules that forbid a call. */
+  /** The backend calls of this store so far. Without it, the no-call checks do not run, and each rule notes that. */
   queryCount?(): number;
-  /** Another store on the same backend, for namespace isolation and S11. The suite disposes it. */
+  /** Another store on the same backend, for namespace isolation and S11. Without it, the S10 namespace test is skipped. The dispose of the first subject releases its siblings. */
   sibling?(config: SubjectConfig): Promise<Subject>;
 }
 

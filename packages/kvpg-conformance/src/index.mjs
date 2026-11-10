@@ -55,12 +55,15 @@ export function conformance(name, makeSubject, options = {}) {
   assert.equal(typeof makeSubject, 'function', 'conformance needs a subject factory');
   const pending = options.pending ?? false;
 
+  // The test of each subject, so that a check that cannot run says so in the report of that test.
+  const owners = new WeakMap();
   describe(`${name} conformance (kvpg contract v1)`, { concurrency: false }, () => {
     const rule = (title, body) => test(title, { skip: pending, timeout: 20_000 }, async (t) => {
       const subjects = [];
       const open = async (config = {}) => {
         const subject = await makeSubject(config);
         assert.ok(subject?.store, 'the factory must return a store');
+        owners.set(subject, { t, noted: false });
         subjects.push(subject);
         return subject;
       };
@@ -71,7 +74,12 @@ export function conformance(name, makeSubject, options = {}) {
       }
     });
     const noCall = async (subject, action) => {
-      if (typeof subject.queryCount !== 'function') return action();
+      if (typeof subject.queryCount !== 'function') {
+        const owner = owners.get(subject);
+        if (owner && !owner.noted) owner.t.diagnostic('queryCount() is missing: the no-call checks of this rule did not run');
+        if (owner) owner.noted = true;
+        return action();
+      }
       const before = subject.queryCount();
       const result = await action();
       assert.equal(subject.queryCount(), before, 'the operation must make no backend call');
@@ -269,9 +277,12 @@ export function conformance(name, makeSubject, options = {}) {
         await noCall(subject, () => rejectsWith(store.cleanupExpired(options), 'invalid_batch'));
       }
     });
-    rule('S10 namespaces with overlapping names stay apart for every operation', async ({ open }) => {
+    rule('S10 namespaces with overlapping names stay apart for every operation', async ({ open, t }) => {
       const subject = await open({ namespace: 'a' });
-      if (typeof subject.sibling !== 'function') return;
+      if (typeof subject.sibling !== 'function') {
+        t.skip('the factory has no sibling(): namespace isolation is not checked');
+        return;
+      }
       const a = subject.store;
       const ab = (await subject.sibling({ namespace: 'ab' })).store;
       const root = (await subject.sibling({ namespace: '' })).store;
@@ -288,7 +299,7 @@ export function conformance(name, makeSubject, options = {}) {
       assert.deepEqual(await root.get('abc'), HIT('from root'));
       assert.deepEqual(await ab.cleanupExpired(), { deleted: 1, batches: 1 });
     });
-    rule('S11 after close each call rejects with closed, and a second close too', async ({ open }) => {
+    rule('S11 after close each call rejects with closed, and a second close too', async ({ open, t }) => {
       const subject = await open();
       const { store } = subject;
       await store.set('k', 1);
@@ -303,6 +314,8 @@ export function conformance(name, makeSubject, options = {}) {
       if (typeof subject.sibling === 'function') {
         const other = (await subject.sibling({})).store;
         assert.deepEqual(await other.get('k'), HIT(1), 'close leaves the backend of the caller open');
+      } else {
+        t.diagnostic('the factory has no sibling(): the backend after close is not checked');
       }
     });
     rule('S12 each failure is one KvError: invalid_value and codec keep their cause', async ({ open }) => {
